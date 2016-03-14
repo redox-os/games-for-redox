@@ -1,0 +1,8 @@
+[package]
+name = "minesweeper"
+version = "0.1.0"
+authors = ["Ticki <Ticki@users.noreply.github.com>"]
+
+[dependencies.libterm]
+git = "https://github.com/Ticki/libterm.git"
+features = ["nightly"]
