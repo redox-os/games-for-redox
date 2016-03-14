@@ -17,6 +17,10 @@ struct Cell {
     revealed: bool,
 }
 
+const FLAGGED: &'static str = "▓";
+const MINE: &'static str = "█";
+const EMPTY: &'static str = "▒";
+
 /// The game state.
 struct Game<R, W> {
     /// Width of the grid.
@@ -102,6 +106,8 @@ impl<R: Read, W: Write> Game<R, W> {
 
                     self.reveal(c);
                 },
+                b'f' => self.set_flag(),
+                b'F' => self.remove_flag(),
                 b'q' => return,
                 _ => {},
             }
@@ -127,6 +133,13 @@ impl<R: Read, W: Write> Game<R, W> {
         self.read_rand();
     }
 
+    fn set_flag(&mut self) {
+        self.stdout.write(FLAGGED.as_bytes());
+    }
+    fn remove_flag(&mut self) {
+        self.stdout.write(EMPTY.as_bytes());
+    }
+
     /// Reset the game.
     ///
     /// This will display the starting grid, and fill the old grid with random mines.
@@ -142,7 +155,7 @@ impl<R: Read, W: Write> Game<R, W> {
         for _ in 0..self.grid.len() / self.width {
             self.stdout.write("│".as_bytes()).unwrap();
             for _ in 0..self.width {
-                self.stdout.write_all("▒".as_bytes()).unwrap();
+                self.stdout.write_all(EMPTY.as_bytes()).unwrap();
             }
             self.stdout.write("│".as_bytes()).unwrap();
             self.stdout.write(b"\n\r").unwrap();
@@ -156,7 +169,7 @@ impl<R: Read, W: Write> Game<R, W> {
 
         for i in 0..self.grid.len() {
             self.grid[i] = Cell {
-                mine: self.read_rand() % 7 == 0,
+                mine: self.read_rand() % 3 == 0,
                 revealed: false,
             };
         }
@@ -207,10 +220,9 @@ impl<R: Read, W: Write> Game<R, W> {
         for y in 0..self.grid.len() / self.width {
             for x in 0..self.width {
                 self.stdout.goto(x as u16 + 1, y as u16 + 1).unwrap();
-                self.stdout.write(match self.grid[self.width * y + x] {
-                    Cell { mine: true, .. } => "█".as_bytes(),
-                    _ => b" ",
-                }).unwrap();
+                if self.grid[self.width * y + x].mine {
+                    self.stdout.write(MINE.as_bytes()).unwrap();
+                }
             }
         }
     }
@@ -219,6 +231,7 @@ impl<R: Read, W: Write> Game<R, W> {
     fn game_over(&mut self) {
         self.reveal_all();
         self.stdout.goto(0, 0).unwrap();
+        self.stdout.hide_cursor();
         self.stdout.write("╔═════════════════╗\n\r\
                            ║───┬Game over────║\n\r\
                            ║ r ┆ replay      ║\n\r\
@@ -232,7 +245,11 @@ impl<R: Read, W: Write> Game<R, W> {
             self.stdin.read(&mut buf).unwrap();
 
             match buf[0] {
-                b'r' => return self.restart(),
+                b'r' => {
+                    self.stdout.show_cursor();
+                    self.restart();
+                    break;
+                },
                 b'q' => return,
                 _ => {},
             }
@@ -299,5 +316,5 @@ impl<R: Read, W: Write> Game<R, W> {
 }
 
 fn main() {
-    init(60, 30);
+    init(70, 40);
 }
