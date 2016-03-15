@@ -44,6 +44,10 @@ flags:
     -r | --height N ~ set the height of the grid.
     -c | --width N  ~ set the width of the grid.
     -h | --help     ~ this help page.
+    -b              ~ beginner mode.
+    -i              ~ immediate mode.
+    -a              ~ advanced mode.
+    -g              ~ god mode.
 
 controls:
     ---selection-------------------
@@ -73,6 +77,10 @@ struct Game<R, W: Write> {
     /// The cells are enumerated like you would read a book. Left to right, until you reach the
     /// line ending.
     grid: Box<[Cell]>,
+    /// The difficulty of the game.
+    ///
+    /// The lower, the easier.
+    difficulty: u8,
     /// The x coordinate.
     x: u16,
     /// The y coordinate.
@@ -92,7 +100,7 @@ struct Game<R, W: Write> {
 }
 
 /// Initialize the game.
-fn init<W: Write, R: Read>(mut stdout: W, stdin: R, w: u16, h: u16) {
+fn init<W: Write, R: Read>(mut stdout: W, stdin: R, difficulty: u8, w: u16, h: u16) {
     stdout.clear().unwrap();
 
     // Set the initial game state.
@@ -109,6 +117,7 @@ fn init<W: Write, R: Read>(mut stdout: W, stdin: R, w: u16, h: u16) {
         points: 0,
         stdin: stdin,
         stdout: stdout,
+        difficulty: difficulty,
     };
 
     // Reset that game.
@@ -134,7 +143,7 @@ impl<R: Read, W: Write> Game<R, W> {
     /// Read cell, randomizing it if it is unobserved.
     fn read_cell(&mut self, c: usize) {
         if !self.grid[c].observed {
-            self.grid[c].mine = self.read_rand() % 6 == 0;
+            self.grid[c].mine = self.read_rand() % self.difficulty == 0;
             self.grid[c].observed = true;
         }
     }
@@ -204,10 +213,10 @@ impl<R: Read, W: Write> Game<R, W> {
     }
 
     /// Read a number from the randomizer.
-    fn read_rand(&mut self) -> usize {
+    fn read_rand(&mut self) -> u8 {
         self.seed ^= self.seed.rotate_right(4).wrapping_add(0x25A45B35C4FD3DF2);
         self.seed ^= self.seed >> 7;
-        self.seed
+        self.seed as u8
     }
 
     /// Write a number into the randomizer.
@@ -262,7 +271,7 @@ impl<R: Read, W: Write> Game<R, W> {
         }
         self.stdout.write("┘".as_bytes()).unwrap();
 
-        self.stdout.goto(1, 1).unwrap();
+        self.stdout.goto(self.x + 1, self.y + 1).unwrap();
         self.stdout.flush().unwrap();
 
         // Reset the grid.
@@ -465,6 +474,7 @@ fn main() {
     let mut args = env::args().skip(1);
     let mut width = None;
     let mut height = None;
+    let mut diff = 6;
 
     // Get and lock the stdios.
     let stdout = io::stdout();
@@ -520,6 +530,10 @@ fn main() {
                 stdout.flush().unwrap();
                 process::exit(0);
             },
+            "-g" => diff = 2,
+            "-a" => diff = 4,
+            "-i" => diff = 6,
+            "-b" => diff = 10,
             _ => {
                 stderr.write(b"Unknown argument.\n").unwrap();
                 stderr.flush().unwrap();
@@ -532,5 +546,5 @@ fn main() {
     let stdout = stdout.into_raw_mode().unwrap();
 
     // Initialize the game!
-    init(stdout, stdin, width.unwrap_or(70), height.unwrap_or(40));
+    init(stdout, stdin, diff, width.unwrap_or(70), height.unwrap_or(40));
 }
