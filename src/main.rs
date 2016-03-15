@@ -83,6 +83,10 @@ struct Game<R, W: Write> {
     ///
     /// This will be modified when a random value is read or written.
     seed: usize,
+    /// Points.
+    ///
+    /// That is, revealed fields.
+    points: u16,
     /// Standard output.
     stdout: W,
     /// Standard input.
@@ -104,6 +108,7 @@ fn init<W: Write, R: Read>(mut stdout: W, mut stdin: R, w: u16, h: u16) {
             revealed: false,
             observed: false,
         }; w as usize * h as usize].into_boxed_slice(),
+        points: 0,
         stdin: stdin,
         stdout: stdout,
     };
@@ -182,6 +187,7 @@ impl<R: Read, W: Write> Game<R, W> {
 
                     // Reveal the cell.
                     self.reveal(x, y);
+                    self.print_points();
                 },
                 b'f' => self.set_flag(),
                 b'F' => self.remove_flag(),
@@ -266,6 +272,8 @@ impl<R: Read, W: Write> Game<R, W> {
                 revealed: false,
                 observed: false,
             };
+
+            self.points = 0;
         }
     }
 
@@ -287,6 +295,8 @@ impl<R: Read, W: Write> Game<R, W> {
     /// This will recursively reveal free cells, until non-free cell is reached, terminating the
     /// current recursion descendant.
     fn reveal(&mut self, x: u16, y: u16) {
+        self.points += 1;
+
         let v = self.val(x, y);
 
         self.get_mut(x, y).revealed = true;
@@ -307,6 +317,13 @@ impl<R: Read, W: Write> Game<R, W> {
             // Aww. The cell was not free. Print the value instead.
             self.stdout.write(&[b'0' + v]).unwrap();
         }
+    }
+
+    /// Print the point count.
+    fn print_points(&mut self) {
+        let height = self.height();
+        self.stdout.goto(2, height + 1).unwrap();
+        self.stdout.write(self.points.to_string().as_bytes()).unwrap();
     }
 
     /// Reveal all the fields, printing where the mines were.
