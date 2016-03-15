@@ -41,6 +41,7 @@ rules:
 flags:
     -r | --height N ~ set the height of the grid.
     -c | --width N  ~ set the width of the grid.
+    -h | --help     ~ this help page.
 
 controls:
     ---selection-------------------
