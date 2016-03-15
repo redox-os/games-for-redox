@@ -38,6 +38,10 @@ rules:
     If no adjacent cells hold a mine, the cell is called free. Free cell will recursively
     reveal their neighboring cells. If a mine is revealed, you loose. The grid wraps.
 
+flags:
+    -r | --height N ~ set the height of the grid.
+    -c | --width N  ~ set the width of the grid.
+
 controls:
     ---selection-------------------
     space ~ reveal the current cell.
@@ -426,7 +430,7 @@ fn main() {
     let stdout = io::stdout();
     let mut stdout = stdout.lock();
     let stdin = io::stdin();
-    let mut stdin = stdin.lock();
+    let stdin = stdin.lock();
     let stderr = io::stderr();
     let mut stderr = stderr.lock();
 
@@ -440,6 +444,36 @@ fn main() {
         };
 
         match arg.as_str() {
+            "-r" | "--height" => if height.is_none() {
+                height = Some(args.next().unwrap_or_else(|| {
+                    stderr.write(b"no height given.\n").unwrap();
+                    stderr.flush().unwrap();
+                    process::exit(1);
+                }).parse().unwrap_or_else(|_| {
+                    stderr.write(b"invalid integer given.\n").unwrap();
+                    stderr.flush().unwrap();
+                    process::exit(1);
+                }));
+            } else {
+                stderr.write(b"you may only input one height.\n").unwrap();
+                stderr.flush().unwrap();
+                process::exit(1);
+            },
+            "-c" | "--width" => if width.is_none() {
+                width = Some(args.next().unwrap_or_else(|| {
+                    stderr.write(b"no width given.\n").unwrap();
+                    stderr.flush().unwrap();
+                    process::exit(1);
+                }).parse().unwrap_or_else(|_| {
+                    stderr.write(b"invalid integer given.\n").unwrap();
+                    stderr.flush().unwrap();
+                    process::exit(1);
+                }));
+            } else {
+                stderr.write(b"you may only input one width.\n").unwrap();
+                stderr.flush().unwrap();
+                process::exit(1);
+            },
             "-h" | "--help" => {
                 // Print the help page.
                 stdout.write(HELP.as_bytes()).unwrap();
@@ -455,7 +489,7 @@ fn main() {
     }
 
     // We go to raw mode to make the control over the terminal more fine-grained.
-    let mut stdout = stdout.into_raw_mode().unwrap();
+    let stdout = stdout.into_raw_mode().unwrap();
 
     // Initialize the game!
     init(stdout, stdin, width.unwrap_or(70), height.unwrap_or(40));
