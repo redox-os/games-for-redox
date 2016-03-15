@@ -13,7 +13,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "libterm"
 version = "0.1.0"
-source = "git+https://github.com/Ticki/libterm.git#df65cc7c56b3f9e2d7c64482d12564bcccc12405"
+source = "git+https://github.com/Ticki/libterm.git#f2af496bbe2baa8220a25c788785dec3e5c1223a"
 dependencies = [
  "libc 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
