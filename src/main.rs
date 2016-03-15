@@ -161,6 +161,7 @@ impl<R: Read, W: Write> Game<R, W> {
             let mut b = [0];
             self.stdin.read(&mut b).unwrap();
 
+            // Collect it as entropy.
             self.write_rand(b[0]);
 
             match b[0] {
@@ -184,7 +185,10 @@ impl<R: Read, W: Write> Game<R, W> {
                 },
                 b'f' => self.set_flag(),
                 b'F' => self.remove_flag(),
-                b'r' => self.restart(),
+                b'r' => {
+                    self.restart();
+                    return;
+                }
                 b'q' => return,
                 _ => {},
             }
