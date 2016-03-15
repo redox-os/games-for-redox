@@ -262,6 +262,9 @@ impl<R: Read, W: Write> Game<R, W> {
         }
         self.stdout.write("┘".as_bytes()).unwrap();
 
+        self.stdout.goto(1, 1).unwrap();
+        self.stdout.flush().unwrap();
+
         // Reset the grid.
         for i in 0..self.grid.len() {
             // Fill it with random, concealed fields.

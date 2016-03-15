@@ -6,3 +6,7 @@ authors = ["Ticki <Ticki@users.noreply.github.com>"]
 [dependencies.libterm]
 git = "https://github.com/Ticki/libterm.git"
 features = ["nightly"]
+
+[[bin]]
+name = "minesweeper"
+path = "src/minesweeper.rs"
