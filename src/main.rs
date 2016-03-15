@@ -20,6 +20,10 @@ struct Cell {
     ///
     /// That is, is it showed or chosen previously by the player?
     revealed: bool,
+    /// Is this cell observed?
+    ///
+    /// That is, is the state of this cell determined, or is it pending for randomization.
+    observed: bool,
 }
 
 /// The string printed for flagged cells.
@@ -87,12 +91,6 @@ struct Game<R, W: Write> {
 
 /// Initialize the game.
 fn init<W: Write, R: Read>(mut stdout: W, mut stdin: R, w: u16, h: u16) {
-    // Collect entropy pool.
-    stdout.write(b"type 10 random characters: ").unwrap();
-    stdout.flush().unwrap();
-    let mut buf = [0; 10];
-    stdin.read_exact(&mut buf).unwrap();
-
     stdout.clear().unwrap();
 
     // Set the initial game state.
@@ -104,15 +102,11 @@ fn init<W: Write, R: Read>(mut stdout: W, mut stdin: R, w: u16, h: u16) {
         grid: vec![Cell {
             mine: false,
             revealed: false,
+            observed: false,
         }; w as usize * h as usize].into_boxed_slice(),
         stdin: stdin,
         stdout: stdout,
     };
-
-    // Write the entropy into the randomizer.
-    for &i in buf.iter() {
-        game.write_rand(i);
-    }
 
     // Reset that game.
     game.reset();
@@ -134,14 +128,28 @@ impl<R: Read, W: Write> Game<R, W> {
         y as usize * self.width as usize + x as usize
     }
 
+    /// Read cell, randomizing it if it is unobserved.
+    fn read_cell(&mut self, c: usize) {
+        if !self.grid[c].observed {
+            self.grid[c].mine = self.read_rand() % 6 == 0;
+            self.grid[c].observed = true;
+        }
+    }
+
     /// Get the cell at (x, y).
-    fn get(&self, x: u16, y: u16) -> Cell {
-        self.grid[self.pos(x, y)]
+    fn get(&mut self, x: u16, y: u16) -> Cell {
+        let pos = self.pos(x, y);
+
+        self.read_cell(pos);
+        self.grid[pos]
     }
 
     /// Get a mutable reference to the cell at (x, y).
     fn get_mut(&mut self, x: u16, y: u16) -> &mut Cell {
-        &mut self.grid[self.pos(x, y)]
+        let pos = self.pos(x, y);
+
+        self.read_cell(pos);
+        &mut self.grid[pos]
     }
 
     /// Start the game loop.
@@ -153,6 +161,8 @@ impl<R: Read, W: Write> Game<R, W> {
             let mut b = [0];
             self.stdin.read(&mut b).unwrap();
 
+            self.write_rand(b[0]);
+
             match b[0] {
                 b'h' => self.x = self.left(self.x),
                 b'j' => self.y = self.down(self.y),
@@ -160,7 +170,8 @@ impl<R: Read, W: Write> Game<R, W> {
                 b'l' => self.x = self.right(self.x),
                 b' ' => {
                     // Check if it was a mine.
-                    if self.get(self.x, self.y).mine {
+                    let (x, y) = (self.x, self.y);
+                    if self.get(x, y).mine {
                         self.game_over();
                         return;
                     }
@@ -247,8 +258,9 @@ impl<R: Read, W: Write> Game<R, W> {
         for i in 0..self.grid.len() {
             // Fill it with random, concealed fields.
             self.grid[i] = Cell {
-                mine: self.read_rand() % 6 == 0,
+                mine: false,
                 revealed: false,
+                observed: false,
             };
         }
     }
@@ -257,8 +269,13 @@ impl<R: Read, W: Write> Game<R, W> {
     ///
     /// The value represent the sum of adjacent cells containing mines. A cell of value, 0, is
     /// called "free".
-    fn val(&self, x: u16, y: u16) -> u8 {
-        self.adjacent(x, y).iter().map(|&(x, y)| self.get(x, y).mine as u8).sum()
+    fn val(&mut self, x: u16, y: u16) -> u8 {
+        // To avoid nightly version, we manually sum the adjacent mines.
+        let mut res = 0;
+        for &(x, y) in self.adjacent(x, y).iter() {
+            res += self.get(x, y).mine as u8;
+        }
+        res
     }
 
     /// Reveal the cell, _c_.
