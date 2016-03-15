@@ -1,8 +1,6 @@
 //! This crate is a simple implementation of minesweeper. It is carefully documented to encourage
 //! newbies to add new games to the repository.
 
-#![feature(iter_arith)]
-
 extern crate libterm;
 
 use libterm::{IntoRawMode, TermWrite};
@@ -94,7 +92,7 @@ struct Game<R, W: Write> {
 }
 
 /// Initialize the game.
-fn init<W: Write, R: Read>(mut stdout: W, mut stdin: R, w: u16, h: u16) {
+fn init<W: Write, R: Read>(mut stdout: W, stdin: R, w: u16, h: u16) {
     stdout.clear().unwrap();
 
     // Set the initial game state.
