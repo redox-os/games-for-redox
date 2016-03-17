@@ -129,10 +129,10 @@ impl<R: Read, W: Write> Game<R, W> {
 
         match key_bytes[0] {
             b'q' => return false,
-            b'k' => self.snake.direction = Direction::Up,
-            b'j' => self.snake.direction = Direction::Down,
-            b'h' => self.snake.direction = Direction::Left,
-            b'l' => self.snake.direction = Direction::Right,
+            b'k' => self.turn_snake(Direction::Up),
+            b'j' => self.turn_snake(Direction::Down),
+            b'h' => self.turn_snake(Direction::Left),
+            b'l' => self.turn_snake(Direction::Right),
             b'0' => {},
             _ => {},
         }
@@ -163,7 +163,7 @@ impl<R: Read, W: Write> Game<R, W> {
         let (mut x, mut y, mut direction) = {
             let head = self.snake.body.back().unwrap();
             
-            match head.direction {
+            match self.snake.direction {
                 Direction::Up => (head.x, head.y + 1, Direction::Up),
                 Direction::Down => (head.x, head.y - 1, Direction::Down),
                 Direction::Left => (head.x - 1, head.y, Direction::Left),
@@ -176,6 +176,10 @@ impl<R: Read, W: Write> Game<R, W> {
             y: y,
             direction: direction
         });
+    }
+
+    fn turn_snake(&mut self, direction: Direction) {
+        self.snake.direction = direction;
     }
 
     fn draw_vertical_line(&mut self, chr: &str, width: u16) {
