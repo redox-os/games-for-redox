@@ -164,8 +164,8 @@ impl<R: Read, W: Write> Game<R, W> {
             let head = self.snake.body.back().unwrap();
             
             match self.snake.direction {
-                Direction::Up => (head.x, head.y + 1, Direction::Up),
-                Direction::Down => (head.x, head.y - 1, Direction::Down),
+                Direction::Up => (head.x, head.y - 1, Direction::Up),
+                Direction::Down => (head.x, head.y + 1, Direction::Down),
                 Direction::Left => (head.x - 1, head.y, Direction::Left),
                 Direction::Right => (head.x + 1, head.y, Direction::Right),
             }
