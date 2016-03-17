@@ -5,6 +5,7 @@ use std::io::{stdout, stdin, Read, Write};
 use std::time::{Instant, Duration};
 use std::collections::VecDeque;
 
+#[derive(PartialEq)]
 enum Direction {
     Up,
     Down,
@@ -105,6 +106,10 @@ impl<R: Read, W: Write> Game<R, W> {
                 return;
             }
 
+            if self.check_game_over() {
+                return;
+            }
+
             self.clear_snake();
             self.draw_snake();
 
@@ -140,6 +145,27 @@ impl<R: Read, W: Write> Game<R, W> {
         self.move_snake();
 
         true
+    }
+
+    /// Check if the Snake is overlapping a wall or a body part
+    fn check_game_over(&mut self) -> bool {
+        let head = &self.snake.body.back().unwrap();
+
+        if self.snake.body.iter().filter(|part| {
+            (head.x, head.y) == (part.x, part.y)
+        }).count() > 1 {
+            return true;
+        }
+
+        match (head.x, head.y) {
+            (0, _) => return true,
+            (_, 0) => return true,
+            (x, _) if x == self.width as u16 => return true,
+            (_, y) if y == self.height as u16 => return true,
+            _ => {},
+        };
+
+        false
     }
 
     fn clear_snake(&mut self) {
@@ -179,7 +205,13 @@ impl<R: Read, W: Write> Game<R, W> {
     }
 
     fn turn_snake(&mut self, direction: Direction) {
-        self.snake.direction = direction;
+        match direction {
+            Direction::Up if self.snake.direction == Direction::Down => return,
+            Direction::Down if self.snake.direction == Direction::Up => return,
+            Direction::Left if self.snake.direction == Direction::Right => return,
+            Direction::Right if self.snake.direction == Direction::Left => return,
+            _ => self.snake.direction = direction,
+        }
     }
 
     fn draw_vertical_line(&mut self, chr: &str, width: u16) {
