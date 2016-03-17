@@ -10,3 +10,7 @@ features = ["nightly"]
 [[bin]]
 name = "minesweeper"
 path = "src/minesweeper.rs"
+
+[[bin]]
+name = "snake"
+path = "src/snake/main.rs"
