@@ -150,21 +150,25 @@ impl<R: Read, W: Write> Game<R, W> {
     }
 
     fn move_snake(&mut self) {
-        self.stdout.write("".as_bytes()).unwrap();
-
-        self.snake.body.pop_front();
+        {
+            let tail = self.snake.body.pop_front().unwrap();
+            self.stdout.goto(tail.x, tail.y);
+            self.stdout.write(" ".as_bytes()).unwrap();
+        }
 
         for part in self.snake.body.iter_mut() {
             part.crawl();
         }
 
-        let head = self.snake.body.back().unwrap();
-
-        let (mut x, mut y, mut direction) = match head.direction {
-            Direction::Up => (head.x, head.y + 1, Direction::Up),
-            Direction::Down => (head.x, head.y - 1, Direction::Down),
-            Direction::Left => (head.x - 1, head.y, Direction::Left),
-            Direction::Right => (head.x + 1, head.y, Direction::Right),
+        let (mut x, mut y, mut direction) = {
+            let head = self.snake.body.back().unwrap();
+            
+            match head.direction {
+                Direction::Up => (head.x, head.y + 1, Direction::Up),
+                Direction::Down => (head.x, head.y - 1, Direction::Down),
+                Direction::Left => (head.x - 1, head.y, Direction::Left),
+                Direction::Right => (head.x + 1, head.y, Direction::Right),
+            }
         };
 
         self.snake.body.push_back(BodyPart{
