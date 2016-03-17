@@ -50,7 +50,7 @@ flags:
     -g              ~ god mode.
 
 controls:
-    ---selection-------------------
+    ---selection--------------------
     space ~ reveal the current cell.
     ---movement---------------------
     h     ~ move left.

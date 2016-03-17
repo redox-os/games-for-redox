@@ -2,7 +2,7 @@
 name = "minesweeper"
 version = "0.1.0"
 dependencies = [
- "libterm 0.1.0 (git+https://github.com/Ticki/libterm.git)",
+ "termion 0.1.0 (git+https://github.com/Ticki/termion.git)",
 ]
 
 [[package]]
@@ -11,9 +11,9 @@ version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
-name = "libterm"
+name = "termion"
 version = "0.1.0"
-source = "git+https://github.com/Ticki/libterm.git#f2af496bbe2baa8220a25c788785dec3e5c1223a"
+source = "git+https://github.com/Ticki/termion.git#06cfe596c0425b75a5c3b74af71a63825f6dcf64"
 dependencies = [
  "libc 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
