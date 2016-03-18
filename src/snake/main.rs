@@ -1,11 +1,11 @@
-extern crate libterm;
+extern crate termion;
 
-use libterm::{IntoRawMode, TermRead, TermWrite, Color, async_stdin};
+use termion::{IntoRawMode, TermRead, TermWrite, Color, async_stdin};
 use std::io::{stdout, stdin, Read, Write};
 use std::time::{Instant, Duration};
 use std::collections::VecDeque;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Copy, Clone)]
 enum Direction {
     Up,
     Down,
@@ -18,6 +18,12 @@ struct BodyPart {
     x: u16,
     y: u16,
     direction: Direction,
+}
+
+/// Snake's Food
+struct Food {
+    x: u16,
+    y: u16,
 }
 
 impl BodyPart {
@@ -55,7 +61,6 @@ impl BodyPart {
 
 /// Snake
 struct Snake {
-    size: u16,
     direction: Direction,
     body: VecDeque<BodyPart>,
 }
@@ -72,12 +77,16 @@ struct Game<R, W> {
     stdout: W,
     /// Snake
     snake: Snake,
+    /// Snake's Food
+    food: Food,
     /// Speed
     speed: u64,
     /// Game Score
     score: i32,
     /// Interval between frames
     interval: u64,
+    /// This will be modified when a random value is read or written.
+    seed: usize,
 }
 
 impl<R: Read, W: Write> Game<R, W> {
@@ -107,11 +116,19 @@ impl<R: Read, W: Write> Game<R, W> {
             }
 
             if self.check_game_over() {
-                return;
+                self.draw_game_over();
+            }
+
+            if self.check_eating() {
+                self.score += 1;
+                self.speed += 2;
+                self.grow_snake();
+                self.move_food();
             }
 
             self.clear_snake();
             self.draw_snake();
+            self.draw_food();
 
             self.stdout.flush().unwrap();
             self.stdout.reset().unwrap();
@@ -132,6 +149,8 @@ impl<R: Read, W: Write> Game<R, W> {
         let mut key_bytes = [0];
         self.stdin.read(&mut key_bytes).unwrap();
 
+        self.write_rand(key_bytes[0]);
+
         match key_bytes[0] {
             b'q' => return false,
             b'k' => self.turn_snake(Direction::Up),
@@ -147,6 +166,19 @@ impl<R: Read, W: Write> Game<R, W> {
         true
     }
 
+    /// Read a number from the randomizer.
+    fn read_rand(&mut self) -> u8 {
+        self.seed ^= self.seed.rotate_right(4).wrapping_add(0x25A45B35C4FD3DF2);
+        self.seed ^= self.seed >> 7;
+        self.seed as u8
+    }
+
+    /// This is used for collecting entropy to the randomizer.
+    fn write_rand(&mut self, b: u8) {
+        self.seed ^= b as usize;
+        self.read_rand();
+    }
+
     /// Check if the Snake is overlapping a wall or a body part
     fn check_game_over(&mut self) -> bool {
         let head = &self.snake.body.back().unwrap();
@@ -158,13 +190,45 @@ impl<R: Read, W: Write> Game<R, W> {
         }
 
         match (head.x, head.y) {
-            (0, _) => return true,
-            (_, 0) => return true,
-            (x, _) if x == self.width as u16 => return true,
-            (_, y) if y == self.height as u16 => return true,
-            _ => {},
+            (0, _) => true,
+            (_, 0) => true,
+            (x, _) if x == self.width as u16 => true,
+            (_, y) if y == self.height as u16 - 1 => true,
+            _ => false,
+        }
+    }
+
+    /// Grows the Snake's tail
+    fn grow_snake(&mut self) {
+        let (mut x, mut y, mut direction) = {
+            let tail = &self.snake.body.front().unwrap();
+
+            (match tail.direction {
+                Direction::Left => tail.x + 1,
+                Direction::Right => tail.x - 1,
+                _ => tail.x,
+            },
+            match tail.direction {
+                Direction::Up => tail.y + 1,
+                Direction::Down => tail.y - 1,
+                _ => tail.y,
+            },
+            tail.direction)
         };
 
+        self.snake.body.push_front(BodyPart {
+            x: x,
+            y: y,
+            direction: direction,
+        });
+    }
+
+    /// Checks if the Snake is overlapping the food
+    fn check_eating(&mut self) -> bool {
+        let head = &self.snake.body.back().unwrap();
+        if (head.x, head.y) == (self.food.x, self.food.y) {
+            return true;
+        }
         false
     }
 
@@ -214,8 +278,50 @@ impl<R: Read, W: Write> Game<R, W> {
         }
     }
 
+    fn draw_game_over(&mut self) {
+        self.stdout.goto(0, 0).unwrap();
+
+        self.stdout.write_fmt(format_args!("╔═════════════════╗\n\r\
+                                            ║───┬Game over────║\n\r\
+                                            ║ SCORE -> {}   ║\n\r\
+                                            ║ r ┆ replay      ║\n\r\
+                                            ║ q ┆ quit        ║\n\r\
+                                            ╚═══╧═════════════╝
+                           ", self.score)).unwrap();
+        self.stdout.flush().unwrap();
+    }
+
     fn draw_vertical_line(&mut self, chr: &str, width: u16) {
         for _ in 0..width { self.stdout.write(chr.as_bytes()); }
+    }
+
+    /// Move the snake's food.
+    fn move_food(&mut self) {
+        loop {
+            let x = (self.read_rand() as u16 % self.width as u16) + 1;
+            let y = (self.read_rand() as u16 % self.height as u16) + 1;
+
+            if self.snake.body.iter().filter(|part| {
+                (x, y) == (part.x, part.y)
+            }).count() > 0 {
+                continue;
+            } else {
+                self.food.x = x;
+                self.food.y = y;
+                break;
+            }
+        };
+    }
+
+    /// Draws the snake's food.
+    fn draw_food(&mut self) {
+        self.stdout.reset().unwrap();
+
+        self.stdout.goto(self.food.x, self.food.y);
+        self.stdout.write(b"*");
+
+        self.stdout.flush().unwrap();
+        self.stdout.reset().unwrap();
     }
 
     /// Draws the snake.
@@ -290,7 +396,6 @@ fn init(width: usize, height: usize) {
         stdin: stdin,
         stdout: stdout,
         snake: Snake {
-            size: 10,
             direction: Direction::Right,
             body: vec![
                 BodyPart { x: 10, y: 10, direction: Direction::Right},
@@ -305,9 +410,14 @@ fn init(width: usize, height: usize) {
                 BodyPart { x: 19, y: 10, direction: Direction::Right},
             ].into_iter().collect(),
         },
+        food: Food {
+            x: width as u16 / 2,
+            y: height as u16 / 2,
+        },
         score: 0,
         speed: 10,
         interval: 0,
+        seed: 0,
     };
 
     game.reset();
@@ -317,5 +427,5 @@ fn init(width: usize, height: usize) {
 }
 
 fn main() {
-    init(100, 100);
+    init(80, 40);
 }

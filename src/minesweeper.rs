@@ -1,9 +1,9 @@
 //! This crate is a simple implementation of minesweeper. It is carefully documented to encourage
 //! newbies to add new games to the repository.
 
-extern crate libterm;
+extern crate termion;
 
-use libterm::{IntoRawMode, TermWrite};
+use termion::{IntoRawMode, TermWrite};
 
 use std::env;
 use std::io::{self, Read, Write};
@@ -50,7 +50,7 @@ flags:
     -g              ~ god mode.
 
 controls:
-    ---selection-------------------
+    ---selection--------------------
     space ~ reveal the current cell.
     ---movement---------------------
     h     ~ move left.

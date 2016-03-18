@@ -3,8 +3,8 @@ name = "minesweeper"
 version = "0.1.0"
 authors = ["Ticki <Ticki@users.noreply.github.com>"]
 
-[dependencies.libterm]
-git = "https://github.com/Ticki/libterm.git"
+[dependencies.termion]
+git = "https://github.com/Ticki/termion.git"
 features = ["nightly"]
 
 [[bin]]
@@ -14,3 +14,7 @@ path = "src/minesweeper.rs"
 [[bin]]
 name = "snake"
 path = "src/snake/main.rs"
+
+[[bin]]
+name = "ice"
+path = "src/ice/main.rs"
