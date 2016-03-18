@@ -12,5 +12,9 @@ name = "minesweeper"
 path = "src/minesweeper.rs"
 
 [[bin]]
+name = "snake"
+path = "src/snake/main.rs"
+
+[[bin]]
 name = "ice"
 path = "src/ice/main.rs"
