@@ -9,6 +9,7 @@ const MAP_1: &'static [u8] = include_bytes!("map1.txt");
 const MAP_2: &'static [u8] = include_bytes!("map2.txt");
 const MAP_3: &'static [u8] = include_bytes!("map3.txt");
 const MAP_4: &'static [u8] = include_bytes!("map4.txt");
+const MAP_5: &'static [u8] = include_bytes!("map5.txt");
 const DONE: &'static [u8] = include_bytes!("done.txt");
 
 /// The game state.
@@ -151,6 +152,7 @@ impl<R: Read, W: Write> Game<R, W> {
             1 => MAP_2,
             2 => MAP_3,
             3 => MAP_4,
+            4 => MAP_5,
             _ => DONE,
         }
     }
