@@ -95,12 +95,11 @@ impl<R: Read, W: Write> Game<R, W> {
     /// This will listen to events and do the appropriate actions.
     fn start(&mut self) {
         self.stdout.hide_cursor().unwrap();
-        self.draw_walls();
 
-        self.interval = 1000 / self.speed;
         let mut before = Instant::now();
 
         loop {
+            self.interval = 1000 / self.speed;
             let now = Instant::now();
             let dt = (now.duration_since(before).subsec_nanos() / 1_000_000) as u64;
 
@@ -116,12 +115,17 @@ impl<R: Read, W: Write> Game<R, W> {
             }
 
             if self.check_game_over() {
-                self.draw_game_over();
+                if self.game_over() {
+                    self.reset();
+                    continue;
+                } else {
+                    return;
+                }
             }
 
             if self.check_eating() {
                 self.score += 1;
-                self.speed += 2;
+                self.speed += 4;
                 self.grow_snake();
                 self.move_food();
             }
@@ -139,6 +143,37 @@ impl<R: Read, W: Write> Game<R, W> {
     ///
     /// This will display the starting play area.
     fn reset(&mut self) {
+        self.stdout.clear().unwrap();
+        self.stdout.flush().unwrap();
+        self.stdout.reset().unwrap();
+
+        self.draw_walls();
+
+        self.snake = Snake {
+            direction: Direction::Right,
+            body: vec![
+                BodyPart { x: 10, y: 10, direction: Direction::Right},
+                BodyPart { x: 11, y: 10, direction: Direction::Right},
+                BodyPart { x: 12, y: 10, direction: Direction::Right},
+                BodyPart { x: 13, y: 10, direction: Direction::Right},
+                BodyPart { x: 14, y: 10, direction: Direction::Right},
+                BodyPart { x: 15, y: 10, direction: Direction::Right},
+                BodyPart { x: 16, y: 10, direction: Direction::Right},
+                BodyPart { x: 17, y: 10, direction: Direction::Right},
+                BodyPart { x: 18, y: 10, direction: Direction::Right},
+                BodyPart { x: 19, y: 10, direction: Direction::Right},
+            ].into_iter().collect(),
+        };
+        
+        self.food = Food {
+            x: self.width as u16 / 2,
+            y: self.height as u16 / 2,
+        };
+        
+        self.score = 0;
+        self.speed = 10;
+        self.interval = 0;
+        self.seed = 0;
     }
 
     /// Update the game.
@@ -278,7 +313,7 @@ impl<R: Read, W: Write> Game<R, W> {
         }
     }
 
-    fn draw_game_over(&mut self) {
+    fn game_over(&mut self) -> bool {
         self.stdout.goto(0, 0).unwrap();
 
         self.stdout.write_fmt(format_args!("╔═════════════════╗\n\r\
@@ -289,6 +324,20 @@ impl<R: Read, W: Write> Game<R, W> {
                                             ╚═══╧═════════════╝
                            ", self.score)).unwrap();
         self.stdout.flush().unwrap();
+
+        loop {
+            // Repeatedly read a single byte.
+            let mut buf = [0];
+            self.stdin.read(&mut buf).unwrap();
+
+            match buf[0] {
+                b'r' => {
+                    return true;
+                },
+                b'q' => return false,
+                _ => {},
+            }
+        }
     }
 
     fn draw_vertical_line(&mut self, chr: &str, width: u16) {
@@ -298,8 +347,8 @@ impl<R: Read, W: Write> Game<R, W> {
     /// Move the snake's food.
     fn move_food(&mut self) {
         loop {
-            let x = (self.read_rand() as u16 % self.width as u16) + 1;
-            let y = (self.read_rand() as u16 % self.height as u16) + 1;
+            let x = (self.read_rand() as u16 % (self.width as u16 - 2)) + 1;
+            let y = (self.read_rand() as u16 % (self.height as u16 - 2)) + 1;
 
             if self.snake.body.iter().filter(|part| {
                 (x, y) == (part.x, part.y)
@@ -397,25 +446,14 @@ fn init(width: usize, height: usize) {
         stdout: stdout,
         snake: Snake {
             direction: Direction::Right,
-            body: vec![
-                BodyPart { x: 10, y: 10, direction: Direction::Right},
-                BodyPart { x: 11, y: 10, direction: Direction::Right},
-                BodyPart { x: 12, y: 10, direction: Direction::Right},
-                BodyPart { x: 13, y: 10, direction: Direction::Right},
-                BodyPart { x: 14, y: 10, direction: Direction::Right},
-                BodyPart { x: 15, y: 10, direction: Direction::Right},
-                BodyPart { x: 16, y: 10, direction: Direction::Right},
-                BodyPart { x: 17, y: 10, direction: Direction::Right},
-                BodyPart { x: 18, y: 10, direction: Direction::Right},
-                BodyPart { x: 19, y: 10, direction: Direction::Right},
-            ].into_iter().collect(),
+            body: vec![].into_iter().collect(),
         },
         food: Food {
-            x: width as u16 / 2,
-            y: height as u16 / 2,
+            x: 0,
+            y: 0,
         },
         score: 0,
-        speed: 10,
+        speed: 0,
         interval: 0,
         seed: 0,
     };
