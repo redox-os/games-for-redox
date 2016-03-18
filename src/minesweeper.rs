@@ -189,11 +189,13 @@ impl<R: Read, W: Write> Game<R, W> {
                         return;
                     }
 
-                    let x = self.x;
-                    let y = self.y;
+                    if !self.get(x, y).revealed {
+                        self.points += 1;
+                    }
 
                     // Reveal the cell.
                     self.reveal(x, y);
+
                     self.print_points();
                 },
                 b'f' => self.set_flag(),
@@ -305,8 +307,6 @@ impl<R: Read, W: Write> Game<R, W> {
     /// This will recursively reveal free cells, until non-free cell is reached, terminating the
     /// current recursion descendant.
     fn reveal(&mut self, x: u16, y: u16) {
-        self.points += 1;
-
         let v = self.val(x, y);
 
         self.get_mut(x, y).revealed = true;
