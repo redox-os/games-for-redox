@@ -13,4 +13,4 @@ path = "src/minesweeper.rs"
 
 [[bin]]
 name = "ice"
-path = "src/ice.rs"
+path = "src/ice/main.rs"
