@@ -33,7 +33,7 @@ const CONCEALED: &'static str = "▒";
 
 /// The help page.
 const HELP: &'static str = r#"
-mine ~ a simple minesweeper implementation.
+minesweeper ~ a simple minesweeper implementation.
 
 rules:
     Select a cell to reveal, printing the number of adjacent cells holding a mine.
