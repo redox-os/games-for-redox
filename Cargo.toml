@@ -18,3 +18,7 @@ path = "src/ice/main.rs"
 [[bin]]
 name = "h4xx3r"
 path = "src/h4xx3r/main.rs"
+
+[[bin]]
+name = "snake"
+path = "src/snake/main.rs"
