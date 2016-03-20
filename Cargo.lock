@@ -2,8 +2,14 @@
 name = "minesweeper"
 version = "0.1.0"
 dependencies = [
+ "extra 0.1.0 (git+https://github.com/redox-os/libextra.git)",
  "termion 0.1.0 (git+https://github.com/Ticki/termion.git)",
 ]
+
+[[package]]
+name = "extra"
+version = "0.1.0"
+source = "git+https://github.com/redox-os/libextra.git#dd01a09283df73e8e62a6fa59ede41897459dcbd"
 
 [[package]]
 name = "libc"

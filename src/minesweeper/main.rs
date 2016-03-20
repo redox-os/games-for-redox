@@ -2,12 +2,15 @@
 //! newbies to add new games to the repository.
 
 extern crate termion;
+extern crate extra;
 
 use termion::{IntoRawMode, TermWrite};
 
 use std::env;
 use std::io::{self, Read, Write};
 use std::process;
+
+use extra::rand::Randomizer;
 
 /// A cell in the grid.
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
@@ -85,10 +88,8 @@ struct Game<R, W: Write> {
     x: u16,
     /// The y coordinate.
     y: u16,
-    /// The randomizer state.
-    ///
-    /// This will be modified when a random value is read or written.
-    seed: usize,
+    /// The randomizer.
+    rand: Randomizer,
     /// Points.
     ///
     /// That is, revealed fields.
@@ -107,7 +108,7 @@ fn init<W: Write, R: Read>(mut stdout: W, stdin: R, difficulty: u8, w: u16, h: u
     let mut game = Game {
         x: 0,
         y: 0,
-        seed: 0,
+        rand: Randomizer::new(0),
         width: w,
         grid: vec![Cell {
             mine: false,
@@ -143,7 +144,7 @@ impl<R: Read, W: Write> Game<R, W> {
     /// Read cell, randomizing it if it is unobserved.
     fn read_cell(&mut self, c: usize) {
         if !self.grid[c].observed {
-            self.grid[c].mine = self.read_rand() % self.difficulty == 0;
+            self.grid[c].mine = self.rand.read_u8() % self.difficulty == 0;
             self.grid[c].observed = true;
         }
     }
@@ -174,7 +175,7 @@ impl<R: Read, W: Write> Game<R, W> {
             self.stdin.read(&mut b).unwrap();
 
             // Collect it as entropy.
-            self.write_rand(b[0]);
+            self.rand.write_u8(b[0]);
 
             match b[0] {
                 b'h' => self.x = self.left(self.x),
@@ -212,21 +213,6 @@ impl<R: Read, W: Write> Game<R, W> {
             self.stdout.goto(self.x + 1, self.y + 1).unwrap();
             self.stdout.flush().unwrap();
         }
-    }
-
-    /// Read a number from the randomizer.
-    fn read_rand(&mut self) -> u8 {
-        self.seed ^= self.seed.rotate_right(4).wrapping_add(0x25A45B35C4FD3DF2);
-        self.seed ^= self.seed >> 7;
-        self.seed as u8
-    }
-
-    /// Write a number into the randomizer.
-    ///
-    /// This is used for collecting entropy to the randomizer.
-    fn write_rand(&mut self, b: u8) {
-        self.seed ^= b as usize;
-        self.read_rand();
     }
 
     /// Set a flag on the current cell.
