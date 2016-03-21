@@ -1,10 +1,12 @@
 extern crate termion;
+extern crate extra;
 
 use termion::{IntoRawMode, TermWrite, Color, async_stdin};
 use std::io::{stdout, stdin, Read, Write};
 use std::time::{Instant, Duration};
 use std::collections::VecDeque;
 use std::thread::sleep;
+use extra::rand::Randomizer;
 
 #[derive(PartialEq, Copy, Clone)]
 enum Direction {
@@ -84,8 +86,8 @@ struct Game<R, W> {
     speed: u64,
     /// Game Score
     score: i32,
-    /// This will be modified when a random value is read or written.
-    seed: usize,
+    /// The randomizer
+    rand: Randomizer,
 }
 
 impl<R: Read, W: Write> Game<R, W> {
@@ -171,7 +173,6 @@ impl<R: Read, W: Write> Game<R, W> {
         
         self.score = 0;
         self.speed = 10;
-        self.seed = 0;
     }
 
     /// Update the game.
@@ -182,7 +183,7 @@ impl<R: Read, W: Write> Game<R, W> {
         let mut key_bytes = [0];
         self.stdin.read(&mut key_bytes).unwrap();
 
-        self.write_rand(key_bytes[0]);
+        self.rand.write_u8(key_bytes[0]);
 
         match key_bytes[0] {
             b'q' => return false,
@@ -198,19 +199,6 @@ impl<R: Read, W: Write> Game<R, W> {
         true
     }
 
-    /// Read a number from the randomizer.
-    fn read_rand(&mut self) -> u8 {
-        self.seed ^= self.seed.rotate_right(4).wrapping_add(0x25A45B35C4FD3DF2);
-        self.seed ^= self.seed >> 7;
-        self.seed as u8
-    }
-
-    /// This is used for collecting entropy to the randomizer.
-    fn write_rand(&mut self, b: u8) {
-        self.seed ^= b as usize;
-        self.read_rand();
-    }
-
     /// Check if the Snake is overlapping a wall or a body part
     fn check_game_over(&mut self) -> bool {
         let head = &self.snake.body.back().unwrap();
@@ -221,12 +209,11 @@ impl<R: Read, W: Write> Game<R, W> {
             return true;
         }
 
-        match (head.x, head.y) {
-            (0, _) => true,
-            (_, 0) => true,
-            (x, _) if x == self.width as u16 => true,
-            (_, y) if y == self.height as u16 - 1 => true,
-            _ => false,
+        if head.x == 0 || head.y == 0 || head.x == self.width as u16 || head.y == self.height as u16 - 1 {
+            true
+        }
+        else {
+            false
         }
     }
 
@@ -344,8 +331,8 @@ impl<R: Read, W: Write> Game<R, W> {
     /// Move the snake's food.
     fn move_food(&mut self) {
         loop {
-            let x = (self.read_rand() as u16 % (self.width as u16 - 2)) + 1;
-            let y = (self.read_rand() as u16 % (self.height as u16 - 2)) + 1;
+            let x = (self.rand.read_u8() as u16 % (self.width as u16 - 2)) + 1;
+            let y = (self.rand.read_u8() as u16 % (self.height as u16 - 2)) + 1;
 
             if self.snake.body.iter().filter(|part| {
                 (x, y) == (part.x, part.y)
@@ -450,7 +437,7 @@ fn init(width: usize, height: usize) {
         },
         score: 0,
         speed: 0,
-        seed: 0,
+        rand: Randomizer::new(0),
     };
 
     game.reset();
