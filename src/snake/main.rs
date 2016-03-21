@@ -4,6 +4,7 @@ use termion::{IntoRawMode, TermWrite, Color, async_stdin};
 use std::io::{stdout, stdin, Read, Write};
 use std::time::{Instant, Duration};
 use std::collections::VecDeque;
+use std::thread::sleep;
 
 #[derive(PartialEq, Copy, Clone)]
 enum Direction {
@@ -27,27 +28,27 @@ struct Food {
 }
 
 impl BodyPart {
+    /// Move's the Snake along it's current direction
     fn crawl(&self) -> BodyPart {
         let mut x = self.x;
         let mut y = self.y;
-        let new_direction: Direction;
 
-        match self.direction {
+        let new_direction = match self.direction {
             Direction::Up => { 
                 y += 1;
-                new_direction = Direction::Up;
+                Direction::Up
             },
             Direction::Down => { 
                 y -= 1;
-                new_direction = Direction::Down;
+                Direction::Down
             },
             Direction::Left => {
                 x -= 1;
-                new_direction = Direction::Left;
+                Direction::Left
             },
             Direction::Right => {
                 x += 1;
-                new_direction = Direction::Right;
+                Direction::Right
             },
         };
 
@@ -83,8 +84,6 @@ struct Game<R, W> {
     speed: u64,
     /// Game Score
     score: i32,
-    /// Interval between frames
-    interval: u64,
     /// This will be modified when a random value is read or written.
     seed: usize,
 }
@@ -99,12 +98,12 @@ impl<R: Read, W: Write> Game<R, W> {
         let mut before = Instant::now();
 
         loop {
-            self.interval = 1000 / self.speed;
+            let interval = 1000 / self.speed;
             let now = Instant::now();
             let dt = (now.duration_since(before).subsec_nanos() / 1_000_000) as u64;
 
-            if dt < self.interval {
-                std::thread::sleep(Duration::from_millis(self.interval - dt));
+            if dt < interval {
+                sleep(Duration::from_millis(interval - dt));
                 continue;
             }
 
@@ -172,7 +171,6 @@ impl<R: Read, W: Write> Game<R, W> {
         
         self.score = 0;
         self.speed = 10;
-        self.interval = 0;
         self.seed = 0;
     }
 
@@ -192,7 +190,6 @@ impl<R: Read, W: Write> Game<R, W> {
             b'j' => self.turn_snake(Direction::Down),
             b'h' => self.turn_snake(Direction::Left),
             b'l' => self.turn_snake(Direction::Right),
-            b'0' => {},
             _ => {},
         }
 
@@ -262,9 +259,10 @@ impl<R: Read, W: Write> Game<R, W> {
     fn check_eating(&mut self) -> bool {
         let head = &self.snake.body.back().unwrap();
         if (head.x, head.y) == (self.food.x, self.food.y) {
-            return true;
+            true
+        } else {
+            false
         }
-        false
     }
 
     fn clear_snake(&mut self) {
@@ -278,7 +276,7 @@ impl<R: Read, W: Write> Game<R, W> {
         {
             let tail = self.snake.body.pop_front().unwrap();
             self.stdout.goto(tail.x, tail.y).unwrap();
-            self.stdout.write(" ".as_bytes()).unwrap();
+            self.stdout.write(b" ").unwrap();
         }
 
         for part in self.snake.body.iter_mut() {
@@ -332,9 +330,7 @@ impl<R: Read, W: Write> Game<R, W> {
             self.stdin.read(&mut buf).unwrap();
 
             match buf[0] {
-                b'r' => {
-                    return true;
-                },
+                b'r' => return true,
                 b'q' => return false,
                 _ => {},
             }
@@ -353,7 +349,7 @@ impl<R: Read, W: Write> Game<R, W> {
 
             if self.snake.body.iter().filter(|part| {
                 (x, y) == (part.x, part.y)
-            }).count() > 0 {
+            }).next().is_some() {
                 continue;
             } else {
                 self.food.x = x;
@@ -368,7 +364,7 @@ impl<R: Read, W: Write> Game<R, W> {
         self.stdout.reset().unwrap();
 
         self.stdout.goto(self.food.x, self.food.y).unwrap();
-        self.stdout.write(b"*").unwrap();
+        self.stdout.write(b"$").unwrap();
 
         self.stdout.flush().unwrap();
         self.stdout.reset().unwrap();
@@ -392,7 +388,6 @@ impl<R: Read, W: Write> Game<R, W> {
         self.stdout.write("@".as_bytes()).unwrap();
 
         self.stdout.flush().unwrap();
-        self.stdout.reset().unwrap();
     }
 
     /// Draws the game walls.
@@ -447,7 +442,7 @@ fn init(width: usize, height: usize) {
         stdout: stdout,
         snake: Snake {
             direction: Direction::Right,
-            body: vec![].into_iter().collect(),
+            body: VecDeque::new(),
         },
         food: Food {
             x: 0,
@@ -455,7 +450,6 @@ fn init(width: usize, height: usize) {
         },
         score: 0,
         speed: 0,
-        interval: 0,
         seed: 0,
     };
 
