@@ -209,31 +209,32 @@ impl<R: Read, W: Write> Game<R, W> {
             return true;
         }
 
-        if head.x == 0 || head.y == 0 || head.x == self.width as u16 || head.y == self.height as u16 - 1 {
-            true
-        }
-        else {
-            false
-        }
+        head.x == 0 || head.y == 0 || head.x == self.width as u16 || head.y == self.height as u16 - 1
     }
 
     /// Grows the Snake's tail
     fn grow_snake(&mut self) {
-        let (x, y, direction) = {
+        let x; 
+        let y;
+        let direction;
+
+        {
             let tail = &self.snake.body.front().unwrap();
 
-            (match tail.direction {
+            x = match tail.direction {
                 Direction::Left => tail.x + 1,
                 Direction::Right => tail.x - 1,
                 _ => tail.x,
-            },
-            match tail.direction {
+            };
+
+            y = match tail.direction {
                 Direction::Up => tail.y + 1,
                 Direction::Down => tail.y - 1,
                 _ => tail.y,
-            },
-            tail.direction)
-        };
+            };
+
+            direction = tail.direction;
+        }
 
         self.snake.body.push_front(BodyPart {
             x: x,
@@ -255,7 +256,7 @@ impl<R: Read, W: Write> Game<R, W> {
     fn clear_snake(&mut self) {
         for part in &self.snake.body {
             self.stdout.goto(part.x, part.y).unwrap();
-            self.stdout.write(" ".as_bytes()).unwrap();
+            self.stdout.write(b" ").unwrap();
         }
     }
 
@@ -281,7 +282,7 @@ impl<R: Read, W: Write> Game<R, W> {
             }
         };
 
-        self.snake.body.push_back(BodyPart{
+        self.snake.body.push_back(BodyPart {
             x: x,
             y: y,
             direction: direction
@@ -289,11 +290,11 @@ impl<R: Read, W: Write> Game<R, W> {
     }
 
     fn turn_snake(&mut self, direction: Direction) {
-        match direction {
-            Direction::Up if self.snake.direction == Direction::Down => return,
-            Direction::Down if self.snake.direction == Direction::Up => return,
-            Direction::Left if self.snake.direction == Direction::Right => return,
-            Direction::Right if self.snake.direction == Direction::Left => return,
+        match (direction, self.snake.direction) {
+            (Direction::Up, Direction::Down)
+            | (Direction::Down, Direction::Up)
+            | (Direction::Left, Direction::Right)
+            | (Direction::Right, Direction::Left) => return,
             _ => self.snake.direction = direction,
         }
     }
