@@ -10,7 +10,7 @@ This repository contains games for Redox OS.
 - [x] Minesweeper.
 - [x] Pokemon-style ice sliding puzzle.
 - [x] Hacker-typer like application.
-- [x] Reversi (not in this repo, yet).
+- [x] Reversi.
 - [ ] Flappy bird.
 - [ ] Quizes.
 - [ ] Boggle.
