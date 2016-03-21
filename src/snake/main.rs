@@ -203,13 +203,11 @@ impl<R: Read, W: Write> Game<R, W> {
     fn check_game_over(&mut self) -> bool {
         let head = &self.snake.body.back().unwrap();
 
-        if self.snake.body.iter().filter(|part| {
-            (head.x, head.y) == (part.x, part.y)
-        }).count() > 1 {
-            return true;
-        }
-
-        head.x == 0 || head.y == 0 || head.x == self.width as u16 || head.y == self.height as u16 - 1
+        self.snake.body.iter().filter(|part| (head.x, head.y) == (part.x, part.y)).count() > 1
+        || head.x == 0
+        || head.y == 0
+        || head.x == self.width as u16
+        || head.y == self.height as u16 - 1
     }
 
     /// Grows the Snake's tail
@@ -246,11 +244,7 @@ impl<R: Read, W: Write> Game<R, W> {
     /// Checks if the Snake is overlapping the food
     fn check_eating(&mut self) -> bool {
         let head = &self.snake.body.back().unwrap();
-        if (head.x, head.y) == (self.food.x, self.food.y) {
-            true
-        } else {
-            false
-        }
+        (head.x, head.y) == (self.food.x, self.food.y)
     }
 
     fn clear_snake(&mut self) {
