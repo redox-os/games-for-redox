@@ -35,29 +35,17 @@ impl BodyPart {
         let mut x = self.x;
         let mut y = self.y;
 
-        let new_direction = match self.direction {
-            Direction::Up => { 
-                y += 1;
-                Direction::Up
-            },
-            Direction::Down => { 
-                y -= 1;
-                Direction::Down
-            },
-            Direction::Left => {
-                x -= 1;
-                Direction::Left
-            },
-            Direction::Right => {
-                x += 1;
-                Direction::Right
-            },
-        };
+        match self.direction {
+            Direction::Up => y += 1,
+            Direction::Down => y -= 1,
+            Direction::Left => x -= 1,
+            Direction::Right => x += 1,
+        }
 
         BodyPart {
             x: x,
             y: y,
-            direction: new_direction
+            direction: self.direction,
         }
     }
 }
@@ -165,12 +153,12 @@ impl<R: Read, W: Write> Game<R, W> {
                 BodyPart { x: 19, y: 10, direction: Direction::Right},
             ].into_iter().collect(),
         };
-        
+
         self.food = Food {
             x: self.width as u16 / 2,
             y: self.height as u16 / 2,
         };
-        
+
         self.score = 0;
         self.speed = 10;
     }
@@ -267,7 +255,7 @@ impl<R: Read, W: Write> Game<R, W> {
 
         let (x, y, direction) = {
             let head = self.snake.body.back().unwrap();
-            
+
             match self.snake.direction {
                 Direction::Up => (head.x, head.y - 1, Direction::Up),
                 Direction::Down => (head.x, head.y + 1, Direction::Down),
@@ -401,7 +389,7 @@ impl<R: Read, W: Write> Game<R, W> {
         self.draw_vertical_line("═", width - 2);
         self.stdout.goto(width - 1, height - 1).unwrap();
         self.stdout.write("╝".as_bytes()).unwrap();
-        
+
         self.stdout.flush().unwrap();
         self.stdout.reset().unwrap();
     }
