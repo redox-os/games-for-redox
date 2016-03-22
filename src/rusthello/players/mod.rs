@@ -11,8 +11,8 @@ use std::time;
 mod ai_medium;
 
 const STARTING_DEPTH: u8 = 2;
-const TIME_LIMIT: f64 = 1.0;
-
+const TIME_LIMIT: i32 = 8 * 100000000;
+const NUM_CELLS: u8 = ( reversi::BOARD_SIZE * reversi::BOARD_SIZE ) as u8;
 
 
 #[derive(Clone)]
@@ -124,9 +124,10 @@ pub fn ai_make_move(game: &reversi::Game, player: &Player) -> (usize, usize) {
             let mut depth = STARTING_DEPTH;
             let mut best_move = (0, 0);
 
-            while start_time.elapsed() < time::Duration::new(1, 0) {
-                if game.get_tempo() + 2 * (depth - 1) >= ( reversi::BOARD_SIZE * reversi::BOARD_SIZE ) as u8 {
-                    return find_best_move(game, &player, (reversi::BOARD_SIZE * reversi::BOARD_SIZE) as u8 - game.get_tempo());
+            while start_time.elapsed() < time::Duration::new(0, TIME_LIMIT / num_moves) {
+                let end_depth = 2 * (depth - 1);
+                if game.get_tempo() + end_depth >= NUM_CELLS {
+                    return find_best_move(game, &player, NUM_CELLS - game.get_tempo());
                 } else {
                     best_move = find_best_move(game, &player, depth);
                 }
