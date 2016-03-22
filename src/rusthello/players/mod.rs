@@ -11,7 +11,7 @@ use std::time;
 mod ai_medium;
 
 const STARTING_DEPTH: u8 = 2;
-const TIME_LIMIT: i32 = 8 * 100000000;
+const TIME_LIMIT: u32 = 8 * 100000000;
 const NUM_CELLS: u8 = ( reversi::BOARD_SIZE * reversi::BOARD_SIZE ) as u8;
 
 
