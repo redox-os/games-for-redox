@@ -5,6 +5,12 @@ use std::io::{self, Write};
 use players;
 use reversi;
 
+pub const DARK_DISK:  char = 'X';
+pub const LIGHT_DISK: char = 'O';
+pub const EMPTY_CELL: char = '-';
+pub const LEGAL_MOVE: char = ' ';
+
+
 pub enum UserCommand {
 	NewGame,
 	NewPlayer(players::Player),
@@ -16,12 +22,12 @@ pub enum UserCommand {
 
 pub const INTRO: &'static str =
 "\n\n
-             RUSThello
-             ● ○ ● ○ ●
-       a simple Reversi game
-     written in Rust with love
-           Redox Edition
-              v 1.1.0\n\n";
+                RUSThello
+               ===========
+          a simple Reversi game
+        written in Rust with love
+              Redox Edition
+                 v 1.1.0\n\n";
 
 pub const MAIN_MENU: &'static str =
 "\nMain Menu:
@@ -36,7 +42,7 @@ pub const MAIN_MENU: &'static str =
   q  - Quit match";
 
 pub const COMMANDS_INFO: &'static str =
-"\nStarting new game…
+"\nStarting new game...
 Type a cell's coordinates to place your disk there. Exaple: \"c4\"
 Type 'help' or 'h' instead of a move to display help message.
 Type 'undo' or 'u' instead of a move to undo last move.
@@ -65,7 +71,7 @@ To play RUSThello you first have to choose who is playing on each side, Dark and
 You can choose a human players or an AI. \
 Choose human for both players and challenge a friend, or test your skills against an AI, or even relax and watch as two AIs compete with each other: all matches are possible!\n
 As a human player, you move by entering the coordinates (a letter and a number) of the square you want to place your disk on, e.g. all of 'c4', 'C4', '4c' and '4C' are valid and equivalent coordinates. \
-For your ease of use, all legal moves are marked on the board with a *.\n
+For your ease of use, all legal moves are marked on the board by an empty cells.\n
 Furthermore, on your turn you can also input special commands: 'undo' to undo your last move (and yes, you can 'undo' as many times as you like) and 'quit' to quit the game.\n\n\n
 \tCREDITS:\n
 RUSThello v. 1.1.0 Redox Edition
@@ -93,8 +99,8 @@ pub fn input_main_menu() -> UserCommand {
 pub fn new_player(side: reversi::Disk) -> Option<players::Player> {
 	loop {
 		match side {
-			reversi::Disk::Light => print!("● Light player: "),
-			reversi::Disk::Dark  => print!("○ Dark  player: "),
+			reversi::Disk::Light => print!("{} Light player: ", LIGHT_DISK),
+			reversi::Disk::Dark  => print!("{} Dark  player: ",  DARK_DISK),
 		}
 		match get_user_command() {
 			Some(UserCommand::NewPlayer(player)) => return Some(player),
@@ -170,44 +176,44 @@ pub fn draw_board(game: &reversi::Game) {
     let board = game.get_board();
 
     // Declare board_to_string and add column reference at the top
-    let mut board_to_string: String = "\n\n\n\t   a  b  c  d  e  f  g  h\n".to_string();
+    let mut board_to_string: String = "\n\n\n\t   a b c d e f g h\n\n".to_string();
 
     // For every row add a row reference to the left
     for (row, row_array) in board.iter().enumerate() {
-        board_to_string.push('\t');
+		board_to_string.push('\t');
         board_to_string.push_str(&(row + 1).to_string());
-        board_to_string.push(' ');
+		board_to_string.push(' ');
+		board_to_string.push(' ');
 
         // For every column, add the appropriate character depending on the content of the current cell
         for (col, &cell) in row_array.iter().enumerate() {
 
+		board_to_string.push(
             match cell {
                 // Light and Dark cells are represented by white and black bullets
-                reversi::Cell::Taken { disk: reversi::Disk::Light } => board_to_string.push_str(" ● "),
-                reversi::Cell::Taken { disk: reversi::Disk::Dark }  => board_to_string.push_str(" ○ "),
+                reversi::Cell::Taken { disk: reversi::Disk::Light } => LIGHT_DISK,
+                reversi::Cell::Taken { disk: reversi::Disk::Dark }  => DARK_DISK,
 
                 // An empty cell will display a plus or a multiplication sign if the current player can move in that cell
                 // or a little central dot otherwise
-                reversi::Cell::Empty => {
-                    if game.check_move((row, col)) {
-                        if let reversi::Status::Running { .. } = game.get_status() {
-							board_to_string.push_str(" * ");
-                        }
+                reversi::Cell::Empty =>
+					if game.check_move((row, col)) {
+						LEGAL_MOVE
                     } else {
-                        board_to_string.push_str(" ∙ ");
-                    }
-                }
-            }
+					EMPTY_CELL
+                	}
+            });
+			board_to_string.push(' ');
         }
 
         // Add a row reference to the right
-        board_to_string.push(' ');
+		board_to_string.push(' ');
         board_to_string.push_str(&(row + 1).to_string());
         board_to_string.push('\n');
     }
 
     // Add column reference at the bottom
-    board_to_string.push_str("\t   a  b  c  d  e  f  g  h\n");
+    board_to_string.push_str("\n\t   a b c d e f g h\n");
 
     // Print board
     println!("{}", board_to_string);
@@ -218,16 +224,16 @@ pub fn draw_board(game: &reversi::Game) {
     match game.get_status() {
         reversi::Status::Running { current_turn } => {
             match current_turn {
-                reversi::Disk::Light => println!("\t        {:>2} ○ >> ● {:<2}\n", score_dark, score_light),
-                reversi::Disk::Dark  => println!("\t        {:>2} ○ << ● {:<2}\n", score_dark, score_light),
+                reversi::Disk::Light => println!("\t    {:>2} {} >>> {} {:<2}\n", score_dark, DARK_DISK, LIGHT_DISK, score_light),
+                reversi::Disk::Dark  => println!("\t    {:>2} {} <<< {} {:<2}\n", score_dark, DARK_DISK, LIGHT_DISK, score_light),
             }
         }
         reversi::Status::Ended => {
-            println!("\t        {:>2} ○    ● {:<2}\n", score_dark, score_light);
+            println!("\t    {:>2} {}     {} {:<2}\n", score_dark, DARK_DISK, LIGHT_DISK, score_light);
             match score_light.cmp(&score_dark) {
-                Ordering::Greater => println!("Light wins!"),
-                Ordering::Less    => println!("Dark wins!"),
-                Ordering::Equal   => println!("Draw!"),
+                Ordering::Greater => println!(" {} Light wins!", LIGHT_DISK),
+                Ordering::Less    => println!(" {} Dark wins!", DARK_DISK),
+                Ordering::Equal   => println!(" Draw!"),
             }
         }
     }
@@ -241,8 +247,8 @@ pub fn print_move(game: &reversi::Game, (row, col): (usize, usize)) {
     let char_col = (('a' as u8) + (col as u8)) as char;
     if let reversi::Status::Running { current_turn } = game.get_status() {
         match current_turn {
-            reversi::Disk::Light => println!("● Light moves: {}{}", char_col, row + 1),
-            reversi::Disk::Dark  => println!("○ Dark moves: {}{}",  char_col, row + 1),
+            reversi::Disk::Light => println!(" {} Light moves: {}{}", LIGHT_DISK, char_col, row + 1),
+            reversi::Disk::Dark  => println!(" {} Dark moves: {}{}",   DARK_DISK, char_col, row + 1),
         }
     }
 }
@@ -255,8 +261,8 @@ pub fn human_make_move(game: &reversi::Game) -> UserCommand {
 
     if let reversi::Status::Running { current_turn } = game.get_status() {
         match current_turn {
-            reversi::Disk::Light => print!("● Light moves: "),
-            reversi::Disk::Dark  => print!("○ Dark moves: "),
+            reversi::Disk::Light => print!(" {} Light moves: ", LIGHT_DISK),
+            reversi::Disk::Dark  => print!(" {} Dark moves: ", DARK_DISK),
         }
     }
 
