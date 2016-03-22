@@ -28,11 +28,66 @@ struct Cell {
 }
 
 /// The string printed for flagged cells.
+#[cfg(target_os = "redox")]
+const FLAGGED: &'static str = "F";
+#[cfg(not(target_os = "redox"))]
 const FLAGGED: &'static str = "▓";
 /// The string printed for mines in the game over revealing.
+#[cfg(target_os = "redox")]
+const MINE: &'static str = "!";
+#[cfg(not(target_os = "redox"))]
 const MINE: &'static str = "█";
 /// The string printed for concealed cells.
+#[cfg(target_os = "redox")]
+const CONCEALED: &'static str = "#";
+#[cfg(not(target_os = "redox"))]
 const CONCEALED: &'static str = "▒";
+
+/// The game over screen.
+#[cfg(target_os = "redox")]
+const GAME_OVER: &'static str = "+-----------------+\n\r\
+                                 |----Game over----|\n\r\
+                                 | r | replay      |\n\r\
+                                 | q | quit        |\n\r\
+                                 +-----------------+";
+#[cfg(not(target_os = "redox"))]
+const GAME_OVER: &'static str = "╔═════════════════╗\n\r\
+                                 ║───┬Game over────║\n\r\
+                                 ║ r ┆ replay      ║\n\r\
+                                 ║ q ┆ quit        ║\n\r\
+                                 ╚═══╧═════════════╝";
+
+/// The upper and lower boundary char.
+#[cfg(target_os = "redox")]
+const HORZ_BOUNDARY: &'static str = "-";
+#[cfg(not(target_os = "redox"))]
+const HORZ_BOUNDARY: &'static str = "─";
+/// The left and right boundary char.
+#[cfg(target_os = "redox")]
+const VERT_BOUNDARY: &'static str = "|";
+#[cfg(not(target_os = "redox"))]
+const VERT_BOUNDARY: &'static str = "│";
+
+/// The top-left corner
+#[cfg(target_os = "redox")]
+const TOP_LEFT_CORNER: &'static str = "+";
+#[cfg(not(target_os = "redox"))]
+const TOP_LEFT_CORNER: &'static str = "┌";
+/// The top-right corner
+#[cfg(target_os = "redox")]
+const TOP_RIGHT_CORNER: &'static str = "+";
+#[cfg(not(target_os = "redox"))]
+const TOP_RIGHT_CORNER: &'static str = "┐";
+/// The bottom-left corner
+#[cfg(target_os = "redox")]
+const BOTTOM_LEFT_CORNER: &'static str = "+";
+#[cfg(not(target_os = "redox"))]
+const BOTTOM_LEFT_CORNER: &'static str = "└";
+/// The bottom-right corner
+#[cfg(target_os = "redox")]
+const BOTTOM_RIGHT_CORNER: &'static str = "+";
+#[cfg(not(target_os = "redox"))]
+const BOTTOM_RIGHT_CORNER: &'static str = "┘";
 
 /// The help page.
 const HELP: &'static str = r#"
@@ -232,32 +287,33 @@ impl<R: Read, W: Write> Game<R, W> {
         self.stdout.goto(0, 0).unwrap();
 
         // Write the upper part of the frame.
-        self.stdout.write("┌".as_bytes()).unwrap();
+        self.stdout.write(TOP_LEFT_CORNER.as_bytes()).unwrap();
         for _ in 0..self.width {
-            self.stdout.write("─".as_bytes()).unwrap();
+            self.stdout.write(HORZ_BOUNDARY.as_bytes()).unwrap();
         }
-        self.stdout.write("┐\n\r".as_bytes()).unwrap();
+        self.stdout.write(TOP_RIGHT_CORNER.as_bytes()).unwrap();
+        self.stdout.write(b"\n\r").unwrap();
 
         // Conceal all the cells.
         for _ in 0..self.height() {
             // The left part of the frame
-            self.stdout.write("│".as_bytes()).unwrap();
+            self.stdout.write(VERT_BOUNDARY.as_bytes()).unwrap();
 
             for _ in 0..self.width {
                 self.stdout.write_all(CONCEALED.as_bytes()).unwrap();
             }
 
             // The right part of the frame.
-            self.stdout.write("│".as_bytes()).unwrap();
+            self.stdout.write(VERT_BOUNDARY.as_bytes()).unwrap();
             self.stdout.write(b"\n\r").unwrap();
         }
 
         // Write the lower part of the frame.
-        self.stdout.write("└".as_bytes()).unwrap();
+        self.stdout.write(BOTTOM_LEFT_CORNER.as_bytes()).unwrap();
         for _ in 0..self.width {
-            self.stdout.write("─".as_bytes()).unwrap();
+            self.stdout.write(HORZ_BOUNDARY.as_bytes()).unwrap();
         }
-        self.stdout.write("┘".as_bytes()).unwrap();
+        self.stdout.write(BOTTOM_RIGHT_CORNER.as_bytes()).unwrap();
 
         self.stdout.goto(self.x + 1, self.y + 1).unwrap();
         self.stdout.flush().unwrap();
@@ -346,12 +402,7 @@ impl<R: Read, W: Write> Game<R, W> {
         // Hide the cursor.
         self.stdout.hide_cursor().unwrap();
 
-        self.stdout.write("╔═════════════════╗\n\r\
-                           ║───┬Game over────║\n\r\
-                           ║ r ┆ replay      ║\n\r\
-                           ║ q ┆ quit        ║\n\r\
-                           ╚═══╧═════════════╝\
-                          ".as_bytes()).unwrap();
+        self.stdout.write(GAME_OVER.as_bytes()).unwrap();
         self.stdout.flush().unwrap();
 
         loop {

@@ -1,5 +1,5 @@
 [root]
-name = "minesweeper"
+name = "games-for-redox"
 version = "0.1.0"
 dependencies = [
  "extra 0.1.0 (git+https://github.com/redox-os/libextra.git)",
