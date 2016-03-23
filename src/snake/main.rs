@@ -84,7 +84,12 @@ impl<R: Read, W: Write> Game<R, W> {
     /// This will listen to events and do the appropriate actions.
     fn start(&mut self) {
         self.stdout.hide_cursor().unwrap();
-
+        
+        // Display a small prompt and
+        // wait for the user to start the game
+        self.game_start();
+        self.reset();
+        
         let mut before = Instant::now();
 
         loop {
@@ -278,6 +283,30 @@ impl<R: Read, W: Write> Game<R, W> {
             | (Direction::Left, Direction::Right)
             | (Direction::Right, Direction::Left) => return,
             _ => self.snake.direction = direction,
+        }
+    }
+
+    fn game_start(&mut self) {
+        self.stdout.goto(0, 0).unwrap();
+        self.stdout.write_fmt(format_args!("╔══════════════════════════════════╗\n\r\
+                                            ║────Welcome to Snake for Redox────║\n\r\
+                                            ║──────────────────────────────────║\n\r\
+                                            ║ space ┆ start game               ║\n\r\
+                                            ║──────────────────────────────────║\n\r\
+                                            ║   h   ┆ left                     ║\n\r\
+                                            ║   j   ┆ down                     ║\n\r\
+                                            ║   k   ┆ up                       ║\n\r\
+                                            ║   l   ┆ right                    ║\n\r\
+                                            ╚═══╧══════════════════════════════╝
+                                    ")).unwrap();
+        loop {
+            let mut buf = [0];
+            self.stdin.read(&mut buf).unwrap();
+
+            match buf[0] {
+                b' ' => return,
+                _ => {},
+            }
         }
     }
 
