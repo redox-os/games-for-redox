@@ -8,79 +8,45 @@ use std::collections::VecDeque;
 use std::thread::sleep;
 use extra::rand::Randomizer;
 
-/// Top-left corner
 #[cfg(target_os = "redox")]
-const TOP_LEFT_CORNER: &'static str = "+";
-#[cfg(not(target_os = "redox"))]
-const TOP_LEFT_CORNER: &'static str = "╔";
+mod graphics {
+    pub const TOP_LEFT_CORNER: &'static str = "+";
+    pub const TOP_RIGHT_CORNER: &'static str = "+";
+    pub const BOTTOM_LEFT_CORNER: &'static str = "+";
+    pub const BOTTOM_RIGHT_CORNER: &'static str = "+";
+    pub const VERTICAL_WALL: &'static str = "|";
+    pub const HORIZONTAL_WALL: &'static str = "-";
+    pub const VERTICAL_SNAKE_BODY: &'static str = "|";
+    pub const HORIZONTAL_SNAKE_BODY: &'static str = "-";
+    pub const SNAKE_HEAD: &'static str = "@";
+    pub const FOOD: &'static str = "$";
+    pub const GAME_OVER: &'static str = "+-----------------+\n\r\
+                                         |----Game over----|\n\r\
+                                         | r | replay      |\n\r\
+                                         | q | quit        |\n\r\
+                                         +-----------------+";
+}
 
-/// Top-right corner
-#[cfg(target_os = "redox")]
-const TOP_RIGHT_CORNER: &'static str = "+";
 #[cfg(not(target_os = "redox"))]
-const TOP_RIGHT_CORNER: &'static str = "╗";
+mod graphics {
+    pub const TOP_LEFT_CORNER: &'static str = "╔";
+    pub const TOP_RIGHT_CORNER: &'static str = "╗";
+    pub const BOTTOM_LEFT_CORNER: &'static str = "╚";
+    pub const BOTTOM_RIGHT_CORNER: &'static str = "╝";
+    pub const VERTICAL_WALL: &'static str = "║";
+    pub const HORIZONTAL_WALL: &'static str = "═";
+    pub const VERTICAL_SNAKE_BODY: &'static str = "║";
+    pub const HORIZONTAL_SNAKE_BODY: &'static str = "═";
+    pub const SNAKE_HEAD: &'static str = "⧲";
+    pub const FOOD: &'static str = "⊛";
+    pub const GAME_OVER: &'static str = "╔═════════════════╗\n\r\
+                                         ║───┬Game over────║\n\r\
+                                         ║ r ┆ replay      ║\n\r\
+                                         ║ q ┆ quit        ║\n\r\
+                                         ╚═══╧═════════════╝";
+}
 
-/// Bottom-left corner
-#[cfg(target_os = "redox")]
-const BOTTOM_LEFT_CORNER: &'static str = "+";
-#[cfg(not(target_os = "redox"))]
-const BOTTOM_LEFT_CORNER: &'static str = "╚";
-
-/// Bottom-right corner
-#[cfg(target_os = "redox")]
-const BOTTOM_RIGHT_CORNER: &'static str = "+";
-#[cfg(not(target_os = "redox"))]
-const BOTTOM_RIGHT_CORNER: &'static str = "╝";
-
-/// Vertical Wall Graphics
-#[cfg(target_os = "redox")]
-const VERTICAL_WALL: &'static str = "|";
-#[cfg(not(target_os = "redox"))]
-const VERTICAL_WALL: &'static str = "║";
-
-/// Horizontal Wall Graphics
-#[cfg(target_os = "redox")]
-const HORIZONTAL_WALL: &'static str = "-";
-#[cfg(not(target_os = "redox"))]
-const HORIZONTAL_WALL: &'static str = "═";
-
-/// Snake Vertical Body Graphics
-#[cfg(target_os = "redox")]
-const VERTICAL_SNAKE_BODY: &'static str = "|";
-#[cfg(not(target_os = "redox"))]
-const VERTICAL_SNAKE_BODY: &'static str = "║";
-
-/// Snake Horizontal Body Graphics
-#[cfg(target_os = "redox")]
-const HORIZONTAL_SNAKE_BODY: &'static str = "-";
-#[cfg(not(target_os = "redox"))]
-const HORIZONTAL_SNAKE_BODY: &'static str = "═";
-
-/// Snake Head Graphics
-#[cfg(target_os = "redox")]
-const SNAKE_HEAD: &'static str = "@";
-#[cfg(not(target_os = "redox"))]
-const SNAKE_HEAD: &'static str = "⧲";
-
-/// Food Graphics
-#[cfg(target_os = "redox")]
-const FOOD: &'static str = "$";
-#[cfg(not(target_os = "redox"))]
-const FOOD: &'static str = "⊛";
-
-/// The game over screen.
-#[cfg(target_os = "redox")]
-const GAME_OVER: &'static str = "+-----------------+\n\r\
-                                 |----Game over----|\n\r\
-                                 | r | replay      |\n\r\
-                                 | q | quit        |\n\r\
-                                 +-----------------+";
-#[cfg(not(target_os = "redox"))]
-const GAME_OVER: &'static str = "╔═════════════════╗\n\r\
-                                 ║───┬Game over────║\n\r\
-                                 ║ r ┆ replay      ║\n\r\
-                                 ║ q ┆ quit        ║\n\r\
-                                 ╚═══╧═════════════╝";
+use self::graphics::*;
 
 #[derive(PartialEq, Copy, Clone)]
 enum Direction {
