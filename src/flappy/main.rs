@@ -230,6 +230,9 @@ impl<R, W: Write> Drop for Game<R, W> {
         // When done, restore the defaults to avoid messing with the terminal.
         // (same as in ice and minesweeper)
         self.stdout.restore().unwrap();
+        self.stdout.write(b"Distance traveled: ").unwrap();
+        self.stdout.write(self.distance.to_string().as_bytes()).unwrap();
+        self.stdout.write(b"\n\r").unwrap();
     }
 }
 
@@ -239,7 +242,4 @@ fn main() {
     let mut game = Game::new(async_stdin(), stdout.lock());
 
     game.start();
-
-    game.stdout.write(b"Distance traveled: ").unwrap();
-    game.stdout.write(game.distance.to_string().as_bytes()).unwrap();
 }
