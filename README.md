@@ -11,7 +11,7 @@ This repository contains games for Redox OS.
 - [x] Pokemon-style ice sliding puzzle.
 - [x] Hacker-typer like application.
 - [x] Reversi (RUSThello).
-- [ ] Flappy bird.
+- [x] Flappy bird.
 - [ ] Quizes.
 - [ ] Boggle.
 - [ ] Tetris.

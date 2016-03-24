@@ -12,15 +12,20 @@ use std::thread;
 use std::time::Duration;
 
 
-const BIRD_CHAR: u8    = b'@';
-const WALL_CHAR: u8    = b'#';
+const BIRD_CHAR: u8 = b'@';
+const WALL_CHAR: u8 = b'#';
 /// The rate of change of the bird's velocity
-const GRAVITY:   f32   = 0.75;
+const GRAVITY: f32 = 0.75;
 /// The width and height of the field of play
-const WIDTH:     usize = 80;
-const HEIGHT:    usize = 30;
+const WIDTH: usize = 80;
+const HEIGHT: usize = 30;
 /// The distance between the walls
-const WALL_SEP:  usize = 15;
+const WALL_SEP: usize = 15;
+
+const WELCOME_SCREEN: &'static str = "+=====================+\n\r\
+                                      | space to jump       |\n\r\
+                                      | q     to quit       |\n\r\
+                                      +=====================+";
 
 
 /// A flappy bird game
@@ -46,19 +51,26 @@ struct Wall {
 
 impl Wall {
     fn new(wid: usize, start: usize) -> Self {
-        Wall { gap_width: wid, gap_start: start }
+        Wall {
+            gap_width: wid,
+            gap_start: start,
+        }
     }
 }
 
 
-impl<R: Read, W: Write> Game<R,W> {
+impl<R: Read, W: Write> Game<R, W> {
     /// Construct the default game
-    fn new(stdin:  R, stdout:  W) 
-            -> Game<R, RawTerminal<W>> {
+    fn new(stdin: R, stdout: W) -> Game<R, RawTerminal<W>> {
         Game {
-            walls: vec![Wall::new(10, 5), Wall::new(8, 4), 
-                        Wall::new(12, 14), Wall::new(8, 10),
-                        Wall::new(8, 7), Wall::new(7, 8)].into_iter().collect(),
+            walls: vec![Wall::new(10, 5),
+                        Wall::new(8, 4),
+                        Wall::new(12, 14),
+                        Wall::new(8, 10),
+                        Wall::new(8, 7),
+                        Wall::new(7, 8)]
+                       .into_iter()
+                       .collect(),
             closest_wall: 30,
             height: 15.0,
             velocity: 0.0,
@@ -73,17 +85,9 @@ impl<R: Read, W: Write> Game<R,W> {
         self.init();
 
         self.stdout.clear().unwrap();
-        self.stdout.goto(20, 11).unwrap();
-        self.stdout.write(b"+==================+").unwrap();
-        self.stdout.goto(20, 12).unwrap();
-        self.stdout.write(b"| Press j to jump, |").unwrap();
-        self.stdout.goto(20, 13).unwrap();
-        self.stdout.write(b"| or q to quit.    |").unwrap();
-        self.stdout.goto(20, 14).unwrap();
-        self.stdout.write(b"| Any key to start.|").unwrap();
-        self.stdout.goto(20, 15).unwrap();
-        self.stdout.write(b"+==================+").unwrap();
-        self.stdout.flush();
+        self.stdout.hide_cursor().unwrap();
+        self.stdout.write(WELCOME_SCREEN.as_bytes()).unwrap();
+        self.stdout.flush().unwrap();
 
         loop {
             let mut b = [0];
@@ -99,10 +103,10 @@ impl<R: Read, W: Write> Game<R,W> {
             if self.stdin.read(&mut b).is_ok() {
                 match b[0] {
                     b'q' => break,
-                    b'j' => self.jump(),
-                    _ => {},
+                    b' ' => self.jump(),
+                    _ => {}
                 };
-            } 
+            }
 
             thread::sleep(Duration::from_millis(150));
             self.step();
@@ -158,12 +162,12 @@ impl<R: Read, W: Write> Game<R,W> {
             }
 
             if let Some(wall) = self.walls.get(0) {
-                if (row < wall.gap_start) 
-                    || (row > wall.gap_start + wall.gap_width) {
-                        self.stdout.write(&[WALL_CHAR])
-                    } else {
-                        self.stdout.write(b" ")
-                    }.unwrap();
+                if (row < wall.gap_start) || (row > wall.gap_start + wall.gap_width) {
+                    self.stdout.write(&[WALL_CHAR])
+                } else {
+                    self.stdout.write(b" ")
+                }
+                .unwrap();
                 col += 1;
             }
 
@@ -173,12 +177,12 @@ impl<R: Read, W: Write> Game<R,W> {
                     break;
                 }
                 self.stdout.write(&[b' '; WALL_SEP]).unwrap();
-                if (row < wall.gap_start)
-                    || (row > wall.gap_start + wall.gap_width) {
-                        self.stdout.write(&[WALL_CHAR])
-                    } else {
-                        self.stdout.write(b" ")
-                    }.unwrap();
+                if (row < wall.gap_start) || (row > wall.gap_start + wall.gap_width) {
+                    self.stdout.write(&[WALL_CHAR])
+                } else {
+                    self.stdout.write(b" ")
+                }
+                .unwrap();
             }
 
             self.stdout.write(b"\n\r").unwrap();
@@ -196,14 +200,13 @@ impl<R: Read, W: Write> Game<R,W> {
             if let Some(wall) = self.walls.get(0) {
                 let height = self.height as usize;
                 // If the bird is in contact with the wall
-                height < wall.gap_start || 
-                    height >= (wall.gap_start + wall.gap_width)
+                height < wall.gap_start || height >= (wall.gap_start + wall.gap_width)
             } else {
                 false
             }
         } else {
             // If the bird is out of bounds
-            self.height < 0.0 || self.height >= HEIGHT as f32 
+            self.height < 0.0 || self.height >= HEIGHT as f32
         }
     }
 
@@ -222,23 +225,21 @@ impl<R: Read, W: Write> Game<R,W> {
 }
 
 
-impl<R, W: Write> Drop for Game<R,W>  {
+impl<R, W: Write> Drop for Game<R, W> {
     fn drop(&mut self) {
         // When done, restore the defaults to avoid messing with the terminal.
-        // (same as in ice and minesweeper
+        // (same as in ice and minesweeper)
         self.stdout.restore().unwrap();
     }
 }
 
 fn main() {
-    let distance = {
-        let stdout = io::stdout();
+    let stdout = io::stdout();
 
-        let mut game = Game::new(async_stdin(), stdout.lock());
+    let mut game = Game::new(async_stdin(), stdout.lock());
 
-        game.start();
+    game.start();
 
-        game.distance
-    };
-    println!("Distance traveled: {}", distance);
+    game.stdout.write(b"Distance traveled: ").unwrap();
+    game.stdout.write(game.distance.to_string().as_bytes()).unwrap();
 }
