@@ -8,6 +8,46 @@ use std::collections::VecDeque;
 use std::thread::sleep;
 use extra::rand::Randomizer;
 
+#[cfg(target_os = "redox")]
+mod graphics {
+    pub const TOP_LEFT_CORNER: &'static str = "+";
+    pub const TOP_RIGHT_CORNER: &'static str = "+";
+    pub const BOTTOM_LEFT_CORNER: &'static str = "+";
+    pub const BOTTOM_RIGHT_CORNER: &'static str = "+";
+    pub const VERTICAL_WALL: &'static str = "|";
+    pub const HORIZONTAL_WALL: &'static str = "-";
+    pub const VERTICAL_SNAKE_BODY: &'static str = "|";
+    pub const HORIZONTAL_SNAKE_BODY: &'static str = "-";
+    pub const SNAKE_HEAD: &'static str = "@";
+    pub const FOOD: &'static str = "$";
+    pub const GAME_OVER: &'static str = "+-----------------+\n\r\
+                                         |----Game over----|\n\r\
+                                         | r | replay      |\n\r\
+                                         | q | quit        |\n\r\
+                                         +-----------------+";
+}
+
+#[cfg(not(target_os = "redox"))]
+mod graphics {
+    pub const TOP_LEFT_CORNER: &'static str = "╔";
+    pub const TOP_RIGHT_CORNER: &'static str = "╗";
+    pub const BOTTOM_LEFT_CORNER: &'static str = "╚";
+    pub const BOTTOM_RIGHT_CORNER: &'static str = "╝";
+    pub const VERTICAL_WALL: &'static str = "║";
+    pub const HORIZONTAL_WALL: &'static str = "═";
+    pub const VERTICAL_SNAKE_BODY: &'static str = "║";
+    pub const HORIZONTAL_SNAKE_BODY: &'static str = "═";
+    pub const SNAKE_HEAD: &'static str = "⧲";
+    pub const FOOD: &'static str = "⊛";
+    pub const GAME_OVER: &'static str = "╔═════════════════╗\n\r\
+                                         ║───┬Game over────║\n\r\
+                                         ║ r ┆ replay      ║\n\r\
+                                         ║ q ┆ quit        ║\n\r\
+                                         ╚═══╧═════════════╝";
+}
+
+use self::graphics::*;
+
 #[derive(PartialEq, Copy, Clone)]
 enum Direction {
     Up,
@@ -284,12 +324,7 @@ impl<R: Read, W: Write> Game<R, W> {
     fn game_over(&mut self) -> bool {
         self.stdout.goto(0, 0).unwrap();
 
-        self.stdout.write_fmt(format_args!("╔═════════════════╗\n\r\
-                                            ║────Game over────║\n\r\
-                                            ║ r ┆ replay      ║\n\r\
-                                            ║ q ┆ quit        ║\n\r\
-                                            ╚═══╧═════════════╝
-                           ")).unwrap();
+        self.stdout.write(GAME_OVER.as_bytes()).unwrap();
         self.stdout.goto((self.width as u16 / 2) - 3, self.height as u16 / 2).unwrap();
         self.stdout.write_fmt(format_args!("SCORE: {}", self.score)).unwrap();
         self.stdout.flush().unwrap();
@@ -307,7 +342,7 @@ impl<R: Read, W: Write> Game<R, W> {
         }
     }
 
-    fn draw_vertical_line(&mut self, chr: &str, width: u16) {
+    fn draw_horizontal_line(&mut self, chr: &str, width: u16) {
         for _ in 0..width { self.stdout.write(chr.as_bytes()).unwrap(); }
     }
 
@@ -334,7 +369,7 @@ impl<R: Read, W: Write> Game<R, W> {
         self.stdout.reset().unwrap();
 
         self.stdout.goto(self.food.x, self.food.y).unwrap();
-        self.stdout.write(b"$").unwrap();
+        self.stdout.write(FOOD.as_bytes()).unwrap();
 
         self.stdout.flush().unwrap();
         self.stdout.reset().unwrap();
@@ -347,15 +382,15 @@ impl<R: Read, W: Write> Game<R, W> {
         for part in &self.snake.body {
             self.stdout.goto(part.x, part.y).unwrap();
             match part.direction {
-                Direction::Up | Direction::Down => self.stdout.write("║".as_bytes()).unwrap(),
-                Direction::Left | Direction::Right => self.stdout.write("═".as_bytes()).unwrap(),
+                Direction::Up | Direction::Down => self.stdout.write(VERTICAL_SNAKE_BODY.as_bytes()).unwrap(),
+                Direction::Left | Direction::Right => self.stdout.write(HORIZONTAL_SNAKE_BODY.as_bytes()).unwrap(),
             };
         }
 
         let head = self.snake.body.back().unwrap();
 
         self.stdout.goto(head.x, head.y).unwrap();
-        self.stdout.write("@".as_bytes()).unwrap();
+        self.stdout.write(SNAKE_HEAD.as_bytes()).unwrap();
 
         self.stdout.flush().unwrap();
     }
@@ -368,27 +403,27 @@ impl<R: Read, W: Write> Game<R, W> {
         self.stdout.color(Color::Red).unwrap();
 
         self.stdout.goto(0, 0).unwrap();
-        self.stdout.write("╔".as_bytes()).unwrap();
+        self.stdout.write(TOP_LEFT_CORNER.as_bytes()).unwrap();
         self.stdout.goto(1, 0).unwrap();
-        self.draw_vertical_line("═", width - 2);
+        self.draw_horizontal_line(HORIZONTAL_WALL, width - 2);
         self.stdout.goto(width - 1, 0).unwrap();
-        self.stdout.write("╗".as_bytes()).unwrap();
+        self.stdout.write(TOP_RIGHT_CORNER.as_bytes()).unwrap();
 
         self.stdout.goto(0, 2).unwrap();
         for y in 1..height {
             self.stdout.goto(0, y as u16).unwrap();
-            self.stdout.write("║".as_bytes()).unwrap();
+            self.stdout.write(VERTICAL_WALL.as_bytes()).unwrap();
 
             self.stdout.goto((self.width - 1) as u16, y as u16).unwrap();
-            self.stdout.write("║".as_bytes()).unwrap();
+            self.stdout.write(VERTICAL_WALL.as_bytes()).unwrap();
         }
 
         self.stdout.goto(0, height - 1).unwrap();
-        self.stdout.write("╚".as_bytes()).unwrap();
+        self.stdout.write(BOTTOM_LEFT_CORNER.as_bytes()).unwrap();
         self.stdout.goto(1, height - 1).unwrap();
-        self.draw_vertical_line("═", width - 2);
+        self.draw_horizontal_line(HORIZONTAL_WALL, width - 2);
         self.stdout.goto(width - 1, height - 1).unwrap();
-        self.stdout.write("╝".as_bytes()).unwrap();
+        self.stdout.write(BOTTOM_RIGHT_CORNER.as_bytes()).unwrap();
 
         self.stdout.flush().unwrap();
         self.stdout.reset().unwrap();
@@ -426,6 +461,8 @@ fn init(width: usize, height: usize) {
     game.reset();
     game.start();
 
+    game.stdout.clear().unwrap();
+    game.stdout.flush().unwrap();
     game.stdout.restore().unwrap();
 }
 

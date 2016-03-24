@@ -29,3 +29,7 @@ path = "src/rusthello/main.rs"
 [[bin]]
 name = "snake"
 path = "src/snake/main.rs"
+
+[[bin]]
+name = "flappy"
+path = "src/flappy/main.rs"
