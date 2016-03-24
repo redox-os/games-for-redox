@@ -111,10 +111,10 @@ controls:
     ---selection--------------------
     space ~ reveal the current cell.
     ---movement---------------------
-    h     ~ move left.
-    j     ~ move down.
-    k     ~ move up.
-    l     ~ move right.
+    h | a ~ move left.
+    j | s ~ move down.
+    k | w ~ move up.
+    l | d ~ move right.
     ---flags------------------------
     f     ~ set flag.
     F     ~ remove flag.
@@ -233,10 +233,10 @@ impl<R: Read, W: Write> Game<R, W> {
             self.rand.write_u8(b[0]);
 
             match b[0] {
-                b'h' => self.x = self.left(self.x),
-                b'j' => self.y = self.down(self.y),
-                b'k' => self.y = self.up(self.y),
-                b'l' => self.x = self.right(self.x),
+                b'h' | b'a' => self.x = self.left(self.x),
+                b'j' | b's' => self.y = self.down(self.y),
+                b'k' | b'w' => self.y = self.up(self.y),
+                b'l' | b'd' => self.x = self.right(self.x),
                 b' ' => {
                     // Check if it was a mine.
                     let (x, y) = (self.x, self.y);
