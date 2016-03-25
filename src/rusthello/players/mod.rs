@@ -97,10 +97,7 @@ impl Player {
     }
 }
 
-
-
 pub fn ai_make_move(game: &reversi::Game, player: &Player) -> (usize, usize) {
-
     let mut num_moves = 0;
     let mut forced_move: (usize, usize) = (reversi::BOARD_SIZE, reversi::BOARD_SIZE);
     let mut game_after_move = game.clone();
@@ -124,7 +121,8 @@ pub fn ai_make_move(game: &reversi::Game, player: &Player) -> (usize, usize) {
             let mut depth = STARTING_DEPTH;
             let mut best_move = (0, 0);
 
-            while start_time.elapsed() < time::Duration::new(0, TIME_LIMIT / num_moves) {
+            //while start_time.elapsed() < time::Duration::new(0, TIME_LIMIT / num_moves)
+            {
                 let end_depth = 2 * (depth - 1);
                 if game.get_tempo() + end_depth >= NUM_CELLS {
                     return find_best_move(game, &player, NUM_CELLS - game.get_tempo());
