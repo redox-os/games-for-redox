@@ -25,6 +25,14 @@ mod graphics {
                                          | r | replay      |\n\r\
                                          | q | quit        |\n\r\
                                          +-----------------+";
+    pub const GAME_START_PROMPT: &'static str = "+------------------------------+\n\r\
+                                                 |--Welcome to snake for Redox--|\n\r\
+                                                 |------------------------------|\n\r\
+                                                 | h | left                     |\n\r\
+                                                 | j | down      Press space    |\n\r\
+                                                 | k | up         to begin!     |\n\r\
+                                                 | l | right                    |\n\r\
+                                                 +------------------------------+";
 }
 
 #[cfg(not(target_os = "redox"))]
@@ -44,6 +52,15 @@ mod graphics {
                                          ║ r ┆ replay      ║\n\r\
                                          ║ q ┆ quit        ║\n\r\
                                          ╚═══╧═════════════╝";
+    pub const GAME_START_PROMPT: &'static str = "╔══════════════════════════════╗\n\r\
+                                                 ║──Welcome to snake for Redox──║\n\r\
+                                                 ║──────────────────────────────║\n\r\
+                                                 ║ h ┆ left                     ║\n\r\
+                                                 ║ j ┆ down      Press space    ║\n\r\
+                                                 ║ k ┆ up         to begin!     ║\n\r\
+                                                 ║ l ┆ right                    ║\n\r\
+                                                 ╚═══╧══════════════════════════╝";
+
 }
 
 use self::graphics::*;
@@ -124,7 +141,8 @@ impl<R: Read, W: Write> Game<R, W> {
     /// This will listen to events and do the appropriate actions.
     fn start(&mut self) {
         self.stdout.hide_cursor().unwrap();
-
+        self.game_start_prompt();
+        self.reset();
         let mut before = Instant::now();
 
         loop {
@@ -240,7 +258,7 @@ impl<R: Read, W: Write> Game<R, W> {
 
     /// Grows the Snake's tail
     fn grow_snake(&mut self) {
-        let x; 
+        let x;
         let y;
         let direction;
 
@@ -318,6 +336,20 @@ impl<R: Read, W: Write> Game<R, W> {
             | (Direction::Left, Direction::Right)
             | (Direction::Right, Direction::Left) => return,
             _ => self.snake.direction = direction,
+        }
+    }
+
+    fn game_start_prompt(&mut self) {
+        self.stdout.goto(0, 0).unwrap();
+        self.stdout.write(GAME_START_PROMPT.as_bytes()).unwrap();
+        self.stdout.flush().unwrap();
+        loop {
+            let mut buf = [0];
+            self.stdin.read(&mut buf).unwrap();
+            self.rand.write_u8(buf[0]);
+            if buf[0] == b' ' {
+                return;
+            }
         }
     }
 
