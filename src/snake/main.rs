@@ -340,7 +340,7 @@ impl<R: Read, W: Write> Game<R, W> {
     }
 
     fn game_start_prompt(&mut self) {
-        self.stdout.goto(0,0).unwrap();
+        self.stdout.goto(0, 0).unwrap();
         self.stdout.write(GAME_START_PROMPT.as_bytes()).unwrap();
         self.stdout.flush().unwrap();
         loop {
