@@ -258,7 +258,7 @@ impl<R: Read, W: Write> Game<R, W> {
 
     /// Grows the Snake's tail
     fn grow_snake(&mut self) {
-        let x; 
+        let x;
         let y;
         let direction;
 
@@ -342,14 +342,13 @@ impl<R: Read, W: Write> Game<R, W> {
     fn game_start_prompt(&mut self) {
         self.stdout.goto(0,0).unwrap();
         self.stdout.write(GAME_START_PROMPT.as_bytes()).unwrap();
-        self.stdout.flush().unwrap(); 
+        self.stdout.flush().unwrap();
         loop {
             let mut buf = [0];
             self.stdin.read(&mut buf).unwrap();
-
-            match buf[0] {
-                b' ' => return,
-                _ => {},
+            self.rand.write_u8(buf[0]);
+            if buf[0] == b' ' {
+                return;
             }
         }
     }
