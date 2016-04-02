@@ -16,4 +16,5 @@ This repository contains games for Redox OS.
 - [ ] Boggle.
 - [ ] Tetris.
 - [ ] Gomoku.
-
+- [ ] Redoku (a sudoku game for Redox-OS).
+- [ ] Redac-Man (a Pac-Man with Red ox as main characters)
