@@ -526,6 +526,8 @@ pub extern "cdecl" fn kernel(interrupt: usize, mut regs: &mut Regs) {
         Pio::<u8>::new(0x20).write(0x20);
     }
 }
+
+// Oh god, I'm so good that I MUST contribute to the Redox operating system...
 "#;
 
 fn main() {
