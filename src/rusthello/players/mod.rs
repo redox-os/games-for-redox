@@ -100,7 +100,7 @@ impl Player {
 
 
 pub fn ai_make_move(game: &reversi::Game, player: &Player) -> (usize, usize) {
-
+/*
     let mut num_moves = 0;
     let mut forced_move: (usize, usize) = (reversi::BOARD_SIZE, reversi::BOARD_SIZE);
     let mut game_after_move = game.clone();
@@ -136,6 +136,9 @@ pub fn ai_make_move(game: &reversi::Game, player: &Player) -> (usize, usize) {
             best_move
         }
     }
+*/
+
+find_best_move(game, &player, 4)
 }
 
 
@@ -164,13 +167,13 @@ pub fn find_best_move(game: &reversi::Game, player: &Player, depth: u8) -> (usiz
                     num_moves +=1;
                     let thread_tx = tx.clone();
 
-                    thread::spawn(move || {
+                    //thread::spawn(move || {
                         let new_move = MoveScore {
                             score: ai_eval(&game_after_move, depth),
                             coord: (row, col),
                         };
                         thread_tx.send(new_move).unwrap();
-                    });
+                    //});
 
                     game_after_move = game.clone();
 
