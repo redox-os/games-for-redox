@@ -11,9 +11,10 @@ This repository contains games for Redox OS.
 - [x] Pokemon-style ice sliding puzzle.
 - [x] Hacker-typer like application.
 - [x] Reversi (RUSThello).
-- [ ] Flappy bird.
-- [ ] Quizes.
+- [x] Flappy bird.
+- [ ] Quizzes.
 - [ ] Boggle.
 - [ ] Tetris.
 - [ ] Gomoku.
-
+- [ ] Redoku (a sudoku game for Redox-OS).
+- [ ] Redac-Man (a Pac-Man with Red ox as main characters)
