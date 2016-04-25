@@ -13,7 +13,7 @@ const TIME_LIMIT: u32 = 8 * 100000000;
 const NUM_CELLS: u8 = ( reversi::BOARD_SIZE * reversi::BOARD_SIZE ) as u8;
 
 
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub enum Score {
     Running(f32),
     EndGame(i16),
@@ -48,7 +48,7 @@ impl Score {
 
 
 
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 struct MoveScore{
     score: Score,
     coord: (usize, usize),
