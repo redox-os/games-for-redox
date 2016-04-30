@@ -12,6 +12,7 @@ This repository contains games for Redox OS.
 - [x] Hacker-typer like application.
 - [x] Reversi (RUSThello).
 - [x] Flappy bird.
+- [x] Democracy "clone"
 - [ ] Quizzes.
 - [ ] Boggle.
 - [ ] Tetris.
