@@ -2,8 +2,6 @@ use interface;
 use reversi;
 
 use std::thread;
-use std::sync::mpsc;
-use std::sync::mpsc::{Sender, Receiver};
 use std::time;
 
 
@@ -15,7 +13,7 @@ const TIME_LIMIT: u32 = 8 * 100000000;
 const NUM_CELLS: u8 = ( reversi::BOARD_SIZE * reversi::BOARD_SIZE ) as u8;
 
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Score {
     Running(f32),
     EndGame(i16),
@@ -50,7 +48,7 @@ impl Score {
 
 
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct MoveScore{
     score: Score,
     coord: (usize, usize),
@@ -97,10 +95,7 @@ impl Player {
     }
 }
 
-
-
 pub fn ai_make_move(game: &reversi::Game, player: &Player) -> (usize, usize) {
-
     let mut num_moves = 0;
     let mut forced_move: (usize, usize) = (reversi::BOARD_SIZE, reversi::BOARD_SIZE);
     let mut game_after_move = game.clone();
@@ -124,7 +119,8 @@ pub fn ai_make_move(game: &reversi::Game, player: &Player) -> (usize, usize) {
             let mut depth = STARTING_DEPTH;
             let mut best_move = (0, 0);
 
-            while start_time.elapsed() < time::Duration::new(0, TIME_LIMIT / num_moves) {
+            //while start_time.elapsed() < time::Duration::new(0, TIME_LIMIT / num_moves)
+            {
                 let end_depth = 2 * (depth - 1);
                 if game.get_tempo() + end_depth >= NUM_CELLS {
                     return find_best_move(game, &player, NUM_CELLS - game.get_tempo());
@@ -151,26 +147,21 @@ pub fn find_best_move(game: &reversi::Game, player: &Player, depth: u8) -> (usiz
 
         let mut best_move: Option<MoveScore> = None;
 
-        let mut num_moves: u8 = 0;
-
-        let (tx, rx): (Sender<MoveScore>, Receiver<MoveScore>) = mpsc::channel();
-
         let mut game_after_move = game.clone();
+
+        let mut threadjoins = Vec::new();
 
         for (row, &rows) in game.get_board().iter().enumerate() {
             for (col, _) in rows.iter().enumerate() {
                 if game_after_move.make_move((row, col)) {
 
-                    num_moves +=1;
-                    let thread_tx = tx.clone();
-
-                    thread::spawn(move || {
+                    threadjoins.push(thread::spawn(move || {
                         let new_move = MoveScore {
                             score: ai_eval(&game_after_move, depth),
                             coord: (row, col),
                         };
-                        thread_tx.send(new_move).unwrap();
-                    });
+                        new_move
+                    }));
 
                     game_after_move = game.clone();
 
@@ -178,8 +169,8 @@ pub fn find_best_move(game: &reversi::Game, player: &Player, depth: u8) -> (usiz
             }
         }
 
-        for _ in 0..num_moves {
-            let new_move = rx.recv().ok().expect("Could not receive answer");
+        for threadjoin in threadjoins {
+            let new_move = threadjoin.join().expect("Could not receive answer");
 
             if let Some(old_move) = best_move.clone() {
                 if MoveScore::is_better_for(new_move.clone(), old_move, current_turn) {
