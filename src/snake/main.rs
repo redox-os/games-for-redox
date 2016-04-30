@@ -37,7 +37,7 @@ mod graphics {
     pub const HORIZONTAL_WALL: &'static str = "═";
     pub const VERTICAL_SNAKE_BODY: &'static str = "║";
     pub const HORIZONTAL_SNAKE_BODY: &'static str = "═";
-    pub const SNAKE_HEAD: &'static str = "⧲";
+    pub const SNAKE_HEAD: &'static str = "@";
     pub const FOOD: &'static str = "⊛";
     pub const GAME_OVER: &'static str = "╔═════════════════╗\n\r\
                                          ║───┬Game over────║\n\r\

@@ -33,3 +33,7 @@ path = "src/snake/main.rs"
 [[bin]]
 name = "flappy"
 path = "src/flappy/main.rs"
+
+[[bin]]
+name = "dem"
+path = "src/dem/main.rs"
