@@ -9,8 +9,10 @@ use std::collections::HashMap;
 use std::io::{self, BufRead, Write};
 use std::mem;
 
+/// The number of factors.
 const FACTORS: usize = 7;
 
+/// Construct a dependency in a struct-like manner.
 macro_rules! dep {
     {
         gdp: $gdp:expr,
@@ -25,12 +27,16 @@ macro_rules! dep {
     };
 }
 
+/// The game.
 struct Game {
+    /// The factors.
     factors: [Factor; FACTORS],
+    /// The aliases/identifiers of the factors.
     names: HashMap<&'static str, usize>,
 }
 
 impl Game {
+    /// Create a new game state.
     fn new() -> Game {
         const GDP_ALIASES: &'static [&'static str] = &["gdp", "economy", "wealth"];
         const AGB_ALIASES: &'static [&'static str] = &["agb", "state", "budget"];
@@ -235,6 +241,7 @@ impl Game {
         }
     }
 
+    /// Initialize the game and start the gameloop.
     fn init(&mut self) {
         let stdin = io::stdin();
         let stdout = io::stdout();
@@ -324,15 +331,20 @@ impl Game {
         }
     }
 
+    /// Look up a factor through one of its aliases.
     fn get(&mut self, s: &str) -> Option<&Factor> {
         self.factors.get(*maybe!(self.names.get(s)))
     }
 
+    /// Look up a factor through one of its aliases.
+    ///
+    /// Returns a mutable borrow.
     fn get_mut(&mut self, s: &str) -> Option<&mut Factor> {
         let id = self.names.get(s);
         self.factors.get_mut(*maybe!(id))
     }
 
+    /// Get an array of the current values of the factors.
     fn values(&self) -> [i64; FACTORS] {
         let mut values: [i64; FACTORS] = unsafe { mem::uninitialized() };
         for (n, i) in self.factors.iter().enumerate() {
@@ -341,6 +353,9 @@ impl Game {
         values
     }
 
+    /// Progress, e.g. update all the values.
+    ///
+    /// This will enter the next round.
     fn progress(&mut self) {
         let val = self.values();
 
@@ -351,25 +366,49 @@ impl Game {
     }
 }
 
+/// An "factor", i.e. a value or property which can or cannot be adjusted, and might be dependent
+/// on other factors.
 #[derive(Copy, Clone)]
 struct Factor {
+    /// The factor's name.
     name: &'static str,
+    /// The description of this factor.
     description: &'static str,
+    /// Is this factor adjustable?
     adjustable: bool,
+    /// The value of this factor.
     value: i64,
+    /// The coefficients of the dependency.
+    ///
+    /// The value of this factor is calculated as a linear combination of all the factors (that is,
+    /// the factors new value is defined by multiplying the vector with the dependency matrix).
+    /// These values are the coefficients, which will be multiplied with the respective factors,
+    /// adding up to the new value.
     dependency: [f32; FACTORS],
+    /// The "step" of the value, that is how much the value will be incremented/decremented at a
+    /// time.
     step: i64,
+    /// The prefix to the value.
+    ///
+    /// This will be put before the value is printed.
     prefix: &'static str,
+    /// The postfix to the value.
+    ///
+    /// This will be put after the value is printed.
     postfix: &'static str,
+    /// The aliases/identifiers of this value.
     alias: &'static [&'static str],
+    /// The change since last time.
     change: i64,
 }
 
 impl Factor {
+    /// Add the step to the value.
     fn step_up(&mut self) {
         self.value += self.step;
     }
 
+    /// Subtract the step from the value.
     fn step_down(&mut self) {
         self.value -= self.step;
     }
