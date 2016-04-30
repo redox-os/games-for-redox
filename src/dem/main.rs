@@ -58,7 +58,6 @@ impl Game {
                     -- Tax\n\
                     ++ Education\n\
                     -- Debt",
-                adjustable: false,
                 value: 3_000,
                 dependency: dep! {
                      gdp: 0.0,
@@ -71,7 +70,7 @@ impl Game {
                      pov: -0.3,
                      pop: 0.0,
                      // Too much debt lead to volatile economy.
-                     debt: -0.1,
+                     debt: -0.5,
                 },
                 step: 0,
                 prefix: "$",
@@ -87,7 +86,6 @@ impl Game {
                     Contributors\n\
                     ++ Tax\n\
                     ++ GDP",
-                adjustable: false,
                 value: 0,
                 dependency: dep! {
                      gdp: 0.2,
@@ -108,7 +106,6 @@ impl Game {
             Factor {
                 name: "Income tax rate",
                 description: "The per mille taxation rate on the citzens' incomes.\n",
-                adjustable: true,
                 value: 0,
                 dependency: dep! {
                      gdp: 0.0,
@@ -128,7 +125,6 @@ impl Game {
             Factor {
                 name: "Investment in education",
                 description: "The dollars invested in education per capita on a yearly basis.",
-                adjustable: true,
                 value: 0,
                 dependency: dep! {
                      gdp: 0.0,
@@ -156,7 +152,6 @@ impl Game {
                     -- GDP\n\
                     ++ Debt\n\
                     ++ Tax",
-                adjustable: false,
                 value: 500,
                 dependency: dep! {
                      gdp: -0.1,
@@ -167,7 +162,7 @@ impl Game {
                      pop: 0.0,
                      debt: 0.1,
                 },
-                step: 40,
+                step: 0,
                 prefix: "",
                 postfix: "‰",
                 alias: POV_ALIASES,
@@ -184,7 +179,6 @@ impl Game {
                     -- Poverty\n\
                     -- Tax rate\n\
                     -- Debt",
-                adjustable: false,
                 value: -400,
                 dependency: dep! {
                      gdp: 0.6,
@@ -197,7 +191,7 @@ impl Game {
                      pop: 0.1,
                      debt: -0.1,
                 },
-                step: 40,
+                step: 0,
                 prefix: "",
                 postfix: "‰",
                 alias: POP_ALIASES,
@@ -209,11 +203,10 @@ impl Game {
                     \n\n\
                     Contributors\n\
                     -- AGB",
-                adjustable: false,
                 value: 80,
                 dependency: dep! {
                      gdp: 0.6,
-                     agb: -0.4,
+                     agb: -0.2,
                      tax: 0.0,
                      edu: 0.0,
                      pov: 0.02,
@@ -221,9 +214,9 @@ impl Game {
                      // You cannot escape debt.
                      debt: 1.0,
                 },
-                step: 40,
+                step: 0,
                 prefix: "",
-                postfix: "‰",
+                postfix: "%",
                 alias: DEBT_ALIASES,
                 change: 0,
             },
@@ -263,7 +256,7 @@ impl Game {
                         maybe!(args.next() => { stdout.writeln(b"No argument given.").unwrap(); continue })
                     ) => { stdout.writeln(b"No such factor.").unwrap(); continue });
 
-                    if f.adjustable { f.step_up() } else {
+                    if f.adjustable() { f.step_up() } else {
                         stdout.writeln(b"Factor not adjustable.").unwrap();
                     }
                 },
@@ -272,7 +265,7 @@ impl Game {
                         maybe!(args.next() => { stdout.writeln(b"No argument given.").unwrap(); continue })
                     ) => { stdout.writeln(b"No such factor.").unwrap(); continue });
 
-                    if f.adjustable { f.step_down() } else {
+                    if f.adjustable() { f.step_down() } else {
                         stdout.writeln(b"Factor not adjustable.").unwrap();
                     }
                 },
@@ -287,7 +280,7 @@ impl Game {
                     stdout.write(factor.prefix.as_bytes()).unwrap();
                     stdout.write(factor.value.to_string().as_bytes()).unwrap();
                     stdout.write(factor.postfix.as_bytes()).unwrap();
-                    if factor.adjustable {
+                    if factor.adjustable() {
                         stdout.write(b" (adjustable)").unwrap();
                     }
                     stdout.write(match factor.change {
@@ -374,8 +367,6 @@ struct Factor {
     name: &'static str,
     /// The description of this factor.
     description: &'static str,
-    /// Is this factor adjustable?
-    adjustable: bool,
     /// The value of this factor.
     value: i64,
     /// The coefficients of the dependency.
@@ -411,6 +402,11 @@ impl Factor {
     /// Subtract the step from the value.
     fn step_down(&mut self) {
         self.value -= self.step;
+    }
+
+    /// Is this factor adjustable?
+    fn adjustable(&self) -> bool {
+        self.step != 0
     }
 }
 
