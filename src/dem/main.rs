@@ -52,7 +52,7 @@ impl Game {
                     -- Tax\n\
                     ++ Education\n\
                     -- Debt",
-                mutable: false,
+                adjustable: false,
                 value: 3_000,
                 dependency: dep! {
                      gdp: 0.0,
@@ -81,7 +81,7 @@ impl Game {
                     Contributors\n\
                     ++ Tax\n\
                     ++ GDP",
-                mutable: false,
+                adjustable: false,
                 value: 0,
                 dependency: dep! {
                      gdp: 0.2,
@@ -102,7 +102,7 @@ impl Game {
             Factor {
                 name: "Income tax rate",
                 description: "The per mille taxation rate on the citzens' incomes.\n",
-                mutable: true,
+                adjustable: true,
                 value: 0,
                 dependency: dep! {
                      gdp: 0.0,
@@ -122,7 +122,7 @@ impl Game {
             Factor {
                 name: "Investment in education",
                 description: "The dollars invested in education per capita on a yearly basis.",
-                mutable: true,
+                adjustable: true,
                 value: 0,
                 dependency: dep! {
                      gdp: 0.0,
@@ -150,7 +150,7 @@ impl Game {
                     -- GDP\n\
                     ++ Debt\n\
                     ++ Tax",
-                mutable: false,
+                adjustable: false,
                 value: 500,
                 dependency: dep! {
                      gdp: -0.1,
@@ -178,7 +178,7 @@ impl Game {
                     -- Poverty\n\
                     -- Tax rate\n\
                     -- Debt",
-                mutable: false,
+                adjustable: false,
                 value: -400,
                 dependency: dep! {
                      gdp: 0.6,
@@ -203,7 +203,7 @@ impl Game {
                     \n\n\
                     Contributors\n\
                     -- AGB",
-                mutable: false,
+                adjustable: false,
                 value: 80,
                 dependency: dep! {
                      gdp: 0.6,
@@ -242,7 +242,7 @@ impl Game {
 
         let mut lines = stdin.lock().lines().map(|x| x.unwrap());
 
-        stdout.writeln("<< Welcome to Locke, the commandline-based Democracy clone. 'help' for help. >>".as_bytes()).unwrap();
+        stdout.writeln("<< Welcome to Dem, the commandline-based Democracy clone. 'help' for help. >>".as_bytes()).unwrap();
         loop {
             stdout.write("$ ".as_bytes()).unwrap();
             stdout.flush().unwrap();
@@ -251,12 +251,24 @@ impl Game {
             let mut args = i.split_whitespace();
 
             match args.next() {
-                Some("inc") | Some("+") => maybe!(self.get_mut(
-                    maybe!(args.next() => { stdout.writeln(b"No argument given.").unwrap(); continue })
-                ) => { stdout.writeln(b"No such factor.").unwrap(); continue }).step_up(),
-                Some("dec") | Some("-") => maybe!(self.get_mut(
-                    maybe!(args.next() => { stdout.writeln(b"No argument given.").unwrap(); continue })
-                ) => { stdout.writeln(b"No such factor.").unwrap(); continue }).step_down(),
+                Some("inc") | Some("+") => {
+                    let f = maybe!(self.get_mut(
+                        maybe!(args.next() => { stdout.writeln(b"No argument given.").unwrap(); continue })
+                    ) => { stdout.writeln(b"No such factor.").unwrap(); continue });
+
+                    if f.adjustable { f.step_up() } else {
+                        stdout.writeln(b"Factor not adjustable.").unwrap();
+                    }
+                },
+                Some("dec") | Some("-") => {
+                    let f = maybe!(self.get_mut(
+                        maybe!(args.next() => { stdout.writeln(b"No argument given.").unwrap(); continue })
+                    ) => { stdout.writeln(b"No such factor.").unwrap(); continue });
+
+                    if f.adjustable { f.step_down() } else {
+                        stdout.writeln(b"Factor not adjustable.").unwrap();
+                    }
+                },
                 Some("next") | Some("n") => self.progress(),
                 Some("info") | Some("i") => {
                     let factor =  maybe!(self.get(
@@ -268,8 +280,8 @@ impl Game {
                     stdout.write(factor.prefix.as_bytes()).unwrap();
                     stdout.write(factor.value.to_string().as_bytes()).unwrap();
                     stdout.write(factor.postfix.as_bytes()).unwrap();
-                    if factor.mutable {
-                        stdout.write(b" (mutable)").unwrap();
+                    if factor.adjustable {
+                        stdout.write(b" (adjustable)").unwrap();
                     }
                     stdout.write(match factor.change {
                         0 => b" ~~~",
@@ -343,7 +355,7 @@ impl Game {
 struct Factor {
     name: &'static str,
     description: &'static str,
-    mutable: bool,
+    adjustable: bool,
     value: i64,
     dependency: [f32; FACTORS],
     step: i64,
