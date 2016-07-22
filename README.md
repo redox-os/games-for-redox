@@ -15,7 +15,7 @@ This repository contains a bunch of minigames running on Redox OS.
 - [x] Democracy "clone"
 - [ ] Quizzes.
 - [ ] Boggle.
-- [ ] Tetris.
+- [x] Tetris. (reblox)
 - [ ] Gomoku.
 - [ ] Redoku (a sudoku game for Redox-OS).
 - [ ] Redac-Man (a Pac-Man with Red ox as main characters)
