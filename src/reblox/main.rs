@@ -1,7 +1,7 @@
 extern crate termion;
+extern crate extra;
 
 mod grid;
-mod pseudo_random;
 
 use termion::{IntoRawMode, TermWrite, RawTerminal, Color, async_stdin};
 use std::io::{self, Write, Read};
@@ -25,7 +25,7 @@ fn type_to_color(block_type: grid::BlockType) -> termion::Color {
         grid::BlockType::S => Color::Rgb(5, 5, 0),
         grid::BlockType::T => Color::Rgb(5, 0, 5),
         grid::BlockType::Z => Color::Rgb(0, 5, 5),
-        grid::BlockType::GARBAGE => Color::Rgb(2, 2, 2),
+        grid::BlockType::Garbage => Color::Rgb(2, 2, 2),
         _ => Color::Rgb(0, 0, 0),
     }
 }
@@ -68,11 +68,11 @@ impl<R: Read, W: Write> Game<R, W> {
                     },
                     b'k' => self.grid.rotate_clockwise(),
                     b'j' => self.grid.rotate_counter_clockwise(),
-                    b' ' => self.grid.drop(),
+                    b' ' => self.grid.fall(),
                     _ => (),
                 }
-                self.grid.rng.next();
-                self.grid.rng.seed += b[0] as u64;
+                self.grid.rng.read_u8();
+                self.grid.rng.write_u8(b[0]);
                 b[0] = 0;
             }
             self.grid.update(time::Duration::from_millis(50));
@@ -107,7 +107,7 @@ impl<R: Read, W: Write> Game<R, W> {
         }
 
         self.stdout.bg_color(type_to_color(self.grid.get_next_type())).unwrap();
-        let piece_pos = grid::pr2piece(10, self.grid.get_next_rot(), self.grid.get_next_type(), 4);
+        let piece_pos = grid::BlockPos::new(10, self.grid.get_next_rot(), self.grid.get_next_type(), 4).positions;
         for i in 0..4 {
             let (x, y) = (piece_pos[i] % 4, piece_pos[i] / 4);
             self.stdout.goto(23 + x as u16 * 2, 16 + (3 - y as u16)).unwrap();
@@ -143,8 +143,9 @@ impl<R: Read, W: Write> Game<R, W> {
     }
 
     fn draw_grid(&mut self) {
-        for i in 0..self.grid.grid_size {
-            let (x, y) = grid::p2xy(i);
+        for i in 0..(grid::GRID_WIDTH * grid::GRID_HEIGHT) {
+            let grid_2D = grid::Grid1D{x: i}.to_2D(grid::GRID_WIDTH);
+            let (x, y) = (grid_2D.x, grid_2D.y);
             match self.grid.grid[i as usize] {
                 grid::BlockType::I => {
                     self.stdout.goto((x * 2 + 1) as u16, (19 - y) as u16).unwrap();
@@ -181,12 +182,12 @@ impl<R: Read, W: Write> Game<R, W> {
                     self.stdout.bg_color(Color::Rgb(0, 5, 5)).unwrap();
                     self.stdout.write(b"  ").unwrap();
                 },
-                grid::BlockType::GARBAGE => {
+                grid::BlockType::Garbage => {
                     self.stdout.goto((x * 2 + 1) as u16, (19 - y) as u16).unwrap();
                     self.stdout.bg_color(Color::Rgb(2, 2, 2)).unwrap();
                     self.stdout.write(b"  ").unwrap();
                 },
-                grid::BlockType::NONE => {
+                grid::BlockType::None => {
                     self.stdout.goto((x * 2 + 1) as u16, (19 - y) as u16).unwrap();
                     self.stdout.bg_color(Color::Rgb(0, 0, 0)).unwrap();
                     self.stdout.write(b" .").unwrap();
