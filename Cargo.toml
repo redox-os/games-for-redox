@@ -37,3 +37,7 @@ path = "src/flappy/main.rs"
 [[bin]]
 name = "dem"
 path = "src/dem/main.rs"
+
+[[bin]]
+name = "reblox"
+path = "src/reblox/main.rs"
