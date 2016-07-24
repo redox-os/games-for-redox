@@ -1,7 +1,8 @@
 extern crate termion;
 extern crate extra;
 
-use termion::{IntoRawMode, TermWrite, Color, async_stdin};
+use termion::{async_stdin, clear, color, cursor, style};
+use termion::raw::IntoRawMode;
 use std::io::{stdout, stdin, Read, Write};
 use std::time::{Instant, Duration};
 use std::collections::VecDeque;
@@ -140,7 +141,7 @@ impl<R: Read, W: Write> Game<R, W> {
     ///
     /// This will listen to events and do the appropriate actions.
     fn start(&mut self) {
-        self.stdout.hide_cursor().unwrap();
+        write!(self.stdout, "{}", cursor::Hide).unwrap();
         self.game_start_prompt();
         self.reset();
         let mut before = Instant::now();
@@ -181,8 +182,8 @@ impl<R: Read, W: Write> Game<R, W> {
             self.draw_snake();
             self.draw_food();
 
+            write!(self.stdout, "{}", style::Reset).unwrap();
             self.stdout.flush().unwrap();
-            self.stdout.reset().unwrap();
         }
     }
 
@@ -190,9 +191,7 @@ impl<R: Read, W: Write> Game<R, W> {
     ///
     /// This will display the starting play area.
     fn reset(&mut self) {
-        self.stdout.clear().unwrap();
-        self.stdout.flush().unwrap();
-        self.stdout.reset().unwrap();
+        write!(self.stdout, "{}{}", clear::All, style::Reset);
 
         self.draw_walls();
 
@@ -233,10 +232,10 @@ impl<R: Read, W: Write> Game<R, W> {
 
         match key_bytes[0] {
             b'q' => return false,
-            b'k' => self.turn_snake(Direction::Up),
-            b'j' => self.turn_snake(Direction::Down),
-            b'h' => self.turn_snake(Direction::Left),
-            b'l' => self.turn_snake(Direction::Right),
+            b'k' | b'w' => self.turn_snake(Direction::Up),
+            b'j' | b's' => self.turn_snake(Direction::Down),
+            b'h' | b'a' => self.turn_snake(Direction::Left),
+            b'l' | b'd' => self.turn_snake(Direction::Right),
             _ => {},
         }
 
@@ -295,16 +294,14 @@ impl<R: Read, W: Write> Game<R, W> {
 
     fn clear_snake(&mut self) {
         for part in &self.snake.body {
-            self.stdout.goto(part.x, part.y).unwrap();
-            self.stdout.write(b" ").unwrap();
+            write!(self.stdout, "{} ", cursor::Goto(part.x + 1, part.y + 1)).unwrap();
         }
     }
 
     fn move_snake(&mut self) {
         {
             let tail = self.snake.body.pop_front().unwrap();
-            self.stdout.goto(tail.x, tail.y).unwrap();
-            self.stdout.write(b" ").unwrap();
+            write!(self.stdout, "{} ", cursor::Goto(tail.x + 1, tail.y + 1)).unwrap();
         }
 
         for part in self.snake.body.iter_mut() {
@@ -340,8 +337,7 @@ impl<R: Read, W: Write> Game<R, W> {
     }
 
     fn game_start_prompt(&mut self) {
-        self.stdout.goto(0, 0).unwrap();
-        self.stdout.write(GAME_START_PROMPT.as_bytes()).unwrap();
+        write!(self.stdout, "{}{}", cursor::Goto(1, 1), GAME_START_PROMPT).unwrap();
         self.stdout.flush().unwrap();
         loop {
             let mut buf = [0];
@@ -354,11 +350,9 @@ impl<R: Read, W: Write> Game<R, W> {
     }
 
     fn game_over(&mut self) -> bool {
-        self.stdout.goto(0, 0).unwrap();
-
-        self.stdout.write(GAME_OVER.as_bytes()).unwrap();
-        self.stdout.goto((self.width as u16 / 2) - 3, self.height as u16 / 2).unwrap();
-        self.stdout.write_fmt(format_args!("SCORE: {}", self.score)).unwrap();
+        write!(self.stdout, "{}{}", cursor::Goto(1, 1), GAME_OVER).unwrap();
+        write!(self.stdout, "{}", cursor::Goto((self.width as u16 / 2) - 2, self.height as u16 / 2 + 1)).unwrap();
+        write!(self.stdout, "SCORE: {}", self.score).unwrap();
         self.stdout.flush().unwrap();
 
         loop {
@@ -398,21 +392,14 @@ impl<R: Read, W: Write> Game<R, W> {
 
     /// Draws the snake's food.
     fn draw_food(&mut self) {
-        self.stdout.reset().unwrap();
-
-        self.stdout.goto(self.food.x, self.food.y).unwrap();
+        write!(self.stdout, "{}", cursor::Goto(self.food.x + 1, self.food.y + 1)).unwrap();
         self.stdout.write(FOOD.as_bytes()).unwrap();
-
-        self.stdout.flush().unwrap();
-        self.stdout.reset().unwrap();
     }
 
     /// Draws the snake.
     fn draw_snake(&mut self) {
-        self.stdout.reset().unwrap();
-
         for part in &self.snake.body {
-            self.stdout.goto(part.x, part.y).unwrap();
+            write!(self.stdout, "{}", cursor::Goto(part.x + 1, part.y + 1)).unwrap();
             match part.direction {
                 Direction::Up | Direction::Down => self.stdout.write(VERTICAL_SNAKE_BODY.as_bytes()).unwrap(),
                 Direction::Left | Direction::Right => self.stdout.write(HORIZONTAL_SNAKE_BODY.as_bytes()).unwrap(),
@@ -421,10 +408,8 @@ impl<R: Read, W: Write> Game<R, W> {
 
         let head = self.snake.body.back().unwrap();
 
-        self.stdout.goto(head.x, head.y).unwrap();
+        write!(self.stdout, "{}", cursor::Goto(head.x + 1, head.y + 1)).unwrap();
         self.stdout.write(SNAKE_HEAD.as_bytes()).unwrap();
-
-        self.stdout.flush().unwrap();
     }
 
     /// Draws the game walls.
@@ -432,33 +417,24 @@ impl<R: Read, W: Write> Game<R, W> {
         let width: u16 = self.width as u16;
         let height: u16 = self.height as u16;
 
-        self.stdout.color(Color::Red).unwrap();
+        write!(self.stdout, "{}", color::Fg(color::Red)).unwrap();
 
-        self.stdout.goto(0, 0).unwrap();
-        self.stdout.write(TOP_LEFT_CORNER.as_bytes()).unwrap();
-        self.stdout.goto(1, 0).unwrap();
+        write!(self.stdout, "{}{}", cursor::Goto(1, 1), TOP_LEFT_CORNER).unwrap();
+        write!(self.stdout, "{}", cursor::Goto(2, 1)).unwrap();
         self.draw_horizontal_line(HORIZONTAL_WALL, width - 2);
-        self.stdout.goto(width - 1, 0).unwrap();
-        self.stdout.write(TOP_RIGHT_CORNER.as_bytes()).unwrap();
+        write!(self.stdout, "{}{}", cursor::Goto(width, 1), TOP_RIGHT_CORNER).unwrap();
 
-        self.stdout.goto(0, 2).unwrap();
         for y in 1..height {
-            self.stdout.goto(0, y as u16).unwrap();
-            self.stdout.write(VERTICAL_WALL.as_bytes()).unwrap();
-
-            self.stdout.goto((self.width - 1) as u16, y as u16).unwrap();
-            self.stdout.write(VERTICAL_WALL.as_bytes()).unwrap();
+            write!(self.stdout, "{}{}", cursor::Goto(1, y as u16 + 1), VERTICAL_WALL).unwrap();
+            write!(self.stdout, "{}{}", cursor::Goto(self.width as u16, y as u16 + 1), VERTICAL_WALL).unwrap();
         }
 
-        self.stdout.goto(0, height - 1).unwrap();
-        self.stdout.write(BOTTOM_LEFT_CORNER.as_bytes()).unwrap();
-        self.stdout.goto(1, height - 1).unwrap();
+        write!(self.stdout, "{}{}", cursor::Goto(1, height), BOTTOM_LEFT_CORNER).unwrap();
+        write!(self.stdout, "{}", cursor::Goto(2, height)).unwrap();
         self.draw_horizontal_line(HORIZONTAL_WALL, width - 2);
-        self.stdout.goto(width - 1, height - 1).unwrap();
-        self.stdout.write(BOTTOM_RIGHT_CORNER.as_bytes()).unwrap();
+        write!(self.stdout, "{}{}", cursor::Goto(width, height), BOTTOM_RIGHT_CORNER).unwrap();
 
-        self.stdout.flush().unwrap();
-        self.stdout.reset().unwrap();
+        write!(self.stdout, "{}", color::Fg(color::Reset)).unwrap();
     }
 }
 
@@ -468,8 +444,7 @@ fn init(width: usize, height: usize) {
     let mut stdout = stdout.lock().into_raw_mode().unwrap();
     let stdin = async_stdin();
 
-    stdout.clear().unwrap();
-    stdout.goto(0, 0).unwrap();
+    write!(stdout, "{}{}", clear::All, cursor::Goto(1, 1)).unwrap();
     stdout.flush().unwrap();
 
     let mut game = Game {
@@ -493,9 +468,8 @@ fn init(width: usize, height: usize) {
     game.reset();
     game.start();
 
-    game.stdout.clear().unwrap();
+    write!(game.stdout, "{}{}{}", clear::All, style::Reset, cursor::Goto(1, 1)).unwrap();
     game.stdout.flush().unwrap();
-    game.stdout.restore().unwrap();
 }
 
 fn main() {
