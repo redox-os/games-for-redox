@@ -1,6 +1,7 @@
 extern crate termion;
 
-use termion::{IntoRawMode, TermWrite, Color};
+use termion::{clear, color, cursor, style};
+use termion::raw::IntoRawMode;
 use std::io::{self, Read, Write};
 
 const SPEED: usize = 7;
@@ -537,11 +538,11 @@ fn main() {
 
     let mut n = 0;
 
-    stdout.clear().unwrap();
+    write!(stdout, "{}{}{}", clear::All, style::Reset, cursor::Goto(1, 1));
 
     stdout.flush().unwrap();
 
-    stdout.color(Color::Green).unwrap();
+    write!(stdout, "{}", color::Fg(color::Green)).unwrap();
 
     for b in stdin.lock().bytes() {
         let out = &GUI_INTERFACE_IN_VISUAL_BASIC[n % GUI_INTERFACE_IN_VISUAL_BASIC.len()..(n + SPEED) % GUI_INTERFACE_IN_VISUAL_BASIC.len()];
@@ -562,7 +563,5 @@ fn main() {
         }
     }
 
-    stdout.restore().unwrap();
-
-
+    write!(stdout, "{}{}{}", clear::All, style::Reset, cursor::Goto(1, 1)).unwrap();
 }
