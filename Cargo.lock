@@ -3,7 +3,7 @@ name = "games-for-redox"
 version = "0.1.0"
 dependencies = [
  "extra 0.1.0 (git+https://github.com/redox-os/libextra.git)",
- "termion 0.1.0 (git+https://github.com/Ticki/termion.git)",
+ "termion 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -18,8 +18,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "termion"
-version = "0.1.0"
-source = "git+https://github.com/Ticki/termion.git#7da5fbf36ffd100a043a1917ffe9e41218ba878c"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
