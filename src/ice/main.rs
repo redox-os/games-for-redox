@@ -1,6 +1,7 @@
 extern crate termion;
 
-use termion::{IntoRawMode, TermWrite, RawTerminal};
+use termion::{clear, cursor, style};
+use termion::raw::{IntoRawMode, RawTerminal};
 use std::io::{self, Write, Read};
 use std::thread;
 use std::time;
@@ -69,10 +70,10 @@ impl<R: Read, W: Write> Game<R, W> {
             self.stdin.read(&mut b).unwrap();
 
             match b[0] {
-                b'h' => self.slide(Direction::Left),
-                b'j' => self.slide(Direction::Down),
-                b'k' => self.slide(Direction::Up),
-                b'l' => self.slide(Direction::Right),
+                b'h' | b'a' => self.slide(Direction::Left),
+                b'j' | b's' => self.slide(Direction::Down),
+                b'k' | b'w' => self.slide(Direction::Up),
+                b'l' | b'd' => self.slide(Direction::Right),
                 b'q' => return,
                 _ => {},
             }
@@ -83,8 +84,7 @@ impl<R: Read, W: Write> Game<R, W> {
 
     /// Initialize the level.
     fn init(&mut self) {
-        self.stdout.clear().unwrap();
-        self.stdout.goto(0, 0).unwrap();
+        write!(self.stdout, "{}{}", clear::All, cursor::Goto(1, 1)).unwrap();
 
         let mut width_counted = false;
 
@@ -129,7 +129,7 @@ impl<R: Read, W: Write> Game<R, W> {
 
     /// Move the cursor to the player position.
     fn update(&mut self) {
-        self.stdout.goto(self.x, self.y).unwrap();
+        write!(self.stdout, "{}", cursor::Goto(self.x + 1, self.y + 1)).unwrap();
         self.stdout.flush().unwrap();
     }
 
@@ -183,7 +183,7 @@ impl<R: Read, W: Write> Game<R, W> {
 impl<R, W: Write> Drop for Game<R, W> {
     fn drop(&mut self) {
         // When done, restore the defaults to avoid messing with the terminal.
-        self.stdout.restore().unwrap();
+        write!(self.stdout, "{}{}{}", clear::All, style::Reset, cursor::Goto(1, 1)).unwrap();
     }
 }
 

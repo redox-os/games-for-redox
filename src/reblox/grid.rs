@@ -665,4 +665,3 @@ impl Grid {
         self.next_falling_rot
     }
 }
-

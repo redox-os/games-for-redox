@@ -4,7 +4,8 @@
 extern crate termion;
 extern crate extra;
 
-use termion::{IntoRawMode, TermWrite};
+use termion::{clear, cursor, style};
+use termion::raw::IntoRawMode;
 
 use std::env;
 use std::io::{self, Read, Write};
@@ -157,7 +158,7 @@ struct Game<R, W: Write> {
 
 /// Initialize the game.
 fn init<W: Write, R: Read>(mut stdout: W, stdin: R, difficulty: u8, w: u16, h: u16) {
-    stdout.clear().unwrap();
+    write!(stdout, "{}", clear::All).unwrap();
 
     // Set the initial game state.
     let mut game = Game {
@@ -186,7 +187,7 @@ fn init<W: Write, R: Read>(mut stdout: W, stdin: R, difficulty: u8, w: u16, h: u
 impl<R, W: Write> Drop for Game<R, W> {
     fn drop(&mut self) {
         // When done, restore the defaults to avoid messing with the terminal.
-        self.stdout.restore().unwrap();
+        write!(self.stdout, "{}{}{}", clear::All, style::Reset, cursor::Goto(1, 1)).unwrap();
     }
 }
 
@@ -265,7 +266,7 @@ impl<R: Read, W: Write> Game<R, W> {
             }
 
             // Make sure the cursor is placed on the current position.
-            self.stdout.goto(self.x + 1, self.y + 1).unwrap();
+            write!(self.stdout, "{}", cursor::Goto(self.x + 2, self.y + 2)).unwrap();
             self.stdout.flush().unwrap();
         }
     }
@@ -284,7 +285,7 @@ impl<R: Read, W: Write> Game<R, W> {
     /// This will display the starting grid, and fill the old grid with random mines.
     fn reset(&mut self) {
         // Reset the cursor.
-        self.stdout.goto(0, 0).unwrap();
+        write!(self.stdout, "{}", cursor::Goto(1, 1)).unwrap();
 
         // Write the upper part of the frame.
         self.stdout.write(TOP_LEFT_CORNER.as_bytes()).unwrap();
@@ -315,7 +316,7 @@ impl<R: Read, W: Write> Game<R, W> {
         }
         self.stdout.write(BOTTOM_RIGHT_CORNER.as_bytes()).unwrap();
 
-        self.stdout.goto(self.x + 1, self.y + 1).unwrap();
+        write!(self.stdout, "{}", cursor::Goto(self.x + 2, self.y + 2)).unwrap();
         self.stdout.flush().unwrap();
 
         // Reset the grid.
@@ -353,7 +354,7 @@ impl<R: Read, W: Write> Game<R, W> {
 
         self.get_mut(x, y).revealed = true;
 
-        self.stdout.goto(x + 1, y + 1).unwrap();
+        write!(self.stdout, "{}", cursor::Goto(x + 2, y + 2)).unwrap();
 
         if v == 0 {
             // If the cell is free, simply put a space on the position.
@@ -374,17 +375,17 @@ impl<R: Read, W: Write> Game<R, W> {
     /// Print the point count.
     fn print_points(&mut self) {
         let height = self.height();
-        self.stdout.goto(2, height + 1).unwrap();
+        write!(self.stdout, "{}", cursor::Goto(3, height + 2)).unwrap();
         self.stdout.write(self.points.to_string().as_bytes()).unwrap();
     }
 
     /// Reveal all the fields, printing where the mines were.
     fn reveal_all(&mut self) {
-        self.stdout.goto(0, 0).unwrap();
+        write!(self.stdout, "{}", cursor::Goto(1, 1)).unwrap();
 
         for y in 0..self.height() {
             for x in 0..self.width {
-                self.stdout.goto(x + 1, y + 1).unwrap();
+                write!(self.stdout, "{}", cursor::Goto(x + 2, y + 2)).unwrap();
                 if self.get(x, y).mine {
                     self.stdout.write(MINE.as_bytes()).unwrap();
                 }
@@ -397,10 +398,8 @@ impl<R: Read, W: Write> Game<R, W> {
         // Reveal all cells, showing the player where the mines were.
         self.reveal_all();
 
-        self.stdout.goto(0, 0).unwrap();
-
-        // Hide the cursor.
-        self.stdout.hide_cursor().unwrap();
+        //Goto top left corner
+        write!(self.stdout, "{}", cursor::Goto(1, 1)).unwrap();
 
         self.stdout.write(GAME_OVER.as_bytes()).unwrap();
         self.stdout.flush().unwrap();
@@ -413,7 +412,6 @@ impl<R: Read, W: Write> Game<R, W> {
             match buf[0] {
                 b'r' => {
                     // Replay!
-                    self.stdout.show_cursor().unwrap();
                     self.restart();
                     return;
                 },

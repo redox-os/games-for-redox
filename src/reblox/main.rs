@@ -1,10 +1,13 @@
+#![feature(question_mark)]
+
 extern crate termion;
 extern crate extra;
 
 mod grid;
 
-use termion::{IntoRawMode, TermWrite, RawTerminal, Color, async_stdin};
-use std::io::{self, Write, Read};
+use termion::{async_stdin, clear, color, cursor, style};
+use termion::raw::{IntoRawMode, RawTerminal};
+use std::io::{self, Write, Read, Result};
 use std::thread;
 use std::time;
 
@@ -13,20 +16,31 @@ fn main() {
 
     let mut game = Game::new(async_stdin(), stdout.lock());
 
-    game.start();
+    if let Err(err) = game.run() {
+        write!(io::stderr(), "Failed to run reblox: {}", err);
+    }
 }
 
-fn type_to_color(block_type: grid::BlockType) -> termion::Color {
-    match block_type {
-        grid::BlockType::I => Color::Rgb(5, 5, 5),
-        grid::BlockType::J => Color::Rgb(5, 0, 0),
-        grid::BlockType::L => Color::Rgb(0, 5, 0),
-        grid::BlockType::O => Color::Rgb(0, 0, 5),
-        grid::BlockType::S => Color::Rgb(5, 5, 0),
-        grid::BlockType::T => Color::Rgb(5, 0, 5),
-        grid::BlockType::Z => Color::Rgb(0, 5, 5),
-        grid::BlockType::Garbage => Color::Rgb(2, 2, 2),
-        _ => Color::Rgb(0, 0, 0),
+impl grid::BlockType {
+    pub fn to_color(&self) -> termion::color::Rgb {
+        match *self {
+            grid::BlockType::I => color::Rgb(255, 255, 255),
+            grid::BlockType::J => color::Rgb(255, 0, 0),
+            grid::BlockType::L => color::Rgb(0, 255, 0),
+            grid::BlockType::O => color::Rgb(0, 0, 255),
+            grid::BlockType::S => color::Rgb(255, 255, 0),
+            grid::BlockType::T => color::Rgb(255, 0, 255),
+            grid::BlockType::Z => color::Rgb(0, 255, 255),
+            grid::BlockType::Garbage => color::Rgb(128, 128, 128),
+            _ => color::Rgb(0, 0, 0),
+        }
+    }
+
+    pub fn to_str(&self) -> &'static str {
+        match *self {
+            grid::BlockType::None => " .",
+            _ => "  "
+        }
     }
 }
 
@@ -45,10 +59,10 @@ impl<R: Read, W: Write> Game<R, W> {
         }
     }
 
-    fn start(&mut self) {
-        self.stdout.clear().unwrap();
-        self.draw_grid_boundaries();
-        self.draw_usage();
+    fn run(&mut self) -> Result<()> {
+        write!(self.stdout, "{}{}{}{}", clear::All, style::Reset, cursor::Goto(1, 1), cursor::Hide)?;
+        self.draw_grid_boundaries()?;
+        self.draw_usage()?;
         self.grid.update(time::Duration::from_secs(2));
         let mut b: [u8; 1] = [0];
         'main: loop {
@@ -76,126 +90,79 @@ impl<R: Read, W: Write> Game<R, W> {
                 b[0] = 0;
             }
             self.grid.update(time::Duration::from_millis(50));
-            self.draw_status();
-            self.draw_next();
-            self.draw_grid();
-            self.stdout.flush().unwrap();
+            self.draw_status()?;
+            self.draw_next()?;
+            self.draw_grid()?;
+            self.stdout.flush()?;
         }
+        write!(self.stdout, "{}{}{}{}", clear::All, style::Reset, cursor::Goto(1, 1), cursor::Show)?;
+
+        Ok(())
     }
 
-    fn draw_usage(&mut self) {
-        self.stdout.goto(23, 1).unwrap();
-        self.stdout.write(b"q - quit").unwrap();
-        self.stdout.goto(23, 3).unwrap();
-        self.stdout.write(b"asd - move").unwrap();
-        self.stdout.goto(23, 4).unwrap();
-        self.stdout.write(b"jk - rotate").unwrap();
-        self.stdout.goto(23, 5).unwrap();
-        self.stdout.write(b"space - drop").unwrap();
-        self.stdout.goto(23, 7).unwrap();
-        self.stdout.write(b"r - reset").unwrap();
+    fn draw_usage(&mut self) -> Result<()> {
+        write!(self.stdout, "{}q - quit", cursor::Goto(24, 2));
+        write!(self.stdout, "{}asd - move", cursor::Goto(24, 4))?;
+        write!(self.stdout, "{}jk - rotate", cursor::Goto(24, 5))?;
+        write!(self.stdout, "{}space - drop", cursor::Goto(24, 6))?;
+        write!(self.stdout, "{}r - reset", cursor::Goto(24, 8))?;
+
+        Ok(())
     }
 
-    fn draw_next(&mut self) {
-        self.stdout.goto(23, 15).unwrap();
-        self.stdout.write(b"next:").unwrap();
+    fn draw_next(&mut self) -> Result<()> {
+        write!(self.stdout, "{}next:", cursor::Goto(24, 16))?;
         for x in 0..4 {
             for y in 0..4 {
-                self.stdout.goto(23 + x * 2, 16 + y).unwrap();
-                self.stdout.write(b"  ").unwrap();
+                write!(self.stdout, "{}  ", cursor::Goto(24 + x * 2, 17 + y))?;
             }
         }
 
-        self.stdout.bg_color(type_to_color(self.grid.get_next_type())).unwrap();
+        write!(self.stdout, "{}", color::Bg(self.grid.get_next_type().to_color()))?;
         let piece_pos = grid::BlockPos::new(10, self.grid.get_next_rot(), self.grid.get_next_type(), 4).positions;
         for i in 0..4 {
             let (x, y) = (piece_pos[i] % 4, piece_pos[i] / 4);
-            self.stdout.goto(23 + x as u16 * 2, 16 + (3 - y as u16)).unwrap();
-            self.stdout.write(b"  ").unwrap();
+            write!(self.stdout, "{}  ", cursor::Goto(24 + x as u16 * 2, 17 + (3 - y as u16)))?;
         }
-        self.stdout.reset().unwrap();
+        write!(self.stdout, "{}", style::Reset)?;
+
+        Ok(())
     }
 
-    fn draw_status(&mut self) {
-        self.stdout.goto(23, 9).unwrap();
-        self.stdout.write(b"level:").unwrap();
-        self.stdout.goto(23, 10).unwrap();
-        self.stdout.write(self.grid.get_level().to_string().as_bytes()).unwrap();
-        self.stdout.goto(23, 12).unwrap();
-        self.stdout.write(b"lines cleared:").unwrap();
-        self.stdout.goto(23, 13).unwrap();
-        self.stdout.write(self.grid.get_lines_cleared().to_string().as_bytes()).unwrap();
+    fn draw_status(&mut self) -> Result<()> {
+        write!(self.stdout, "{}level:", cursor::Goto(24, 10))?;
+        write!(self.stdout, "{}{}", cursor::Goto(24, 11), self.grid.get_level().to_string())?;
+        write!(self.stdout, "{}lines cleared:", cursor::Goto(24, 13))?;
+        write!(self.stdout, "{}{}", cursor::Goto(24, 14), self.grid.get_lines_cleared().to_string())?;
+
+        Ok(())
     }
 
-    fn draw_grid_boundaries(&mut self) {
-        for y in 0..21 {
-            self.stdout.goto(21, y).unwrap();
-            self.stdout.write(b"=").unwrap();
-            self.stdout.goto(0, y).unwrap();
-            self.stdout.write(b"=").unwrap();
-            if y == 20 {
-                for x in 1..21 {
-                    self.stdout.goto(x, y).unwrap();
-                    self.stdout.write(b"=").unwrap();
+    fn draw_grid_boundaries(&mut self) -> Result<()> {
+        for y in 1..22 {
+            write!(self.stdout, "{}=", cursor::Goto(22, y))?;
+            write!(self.stdout, "{}=", cursor::Goto(1, y))?;
+            if y == 21 {
+                for x in 2..22 {
+                    write!(self.stdout, "{}=", cursor::Goto(x, y))?;
                 }
             }
         }
+
+        Ok(())
     }
 
-    fn draw_grid(&mut self) {
+    fn draw_grid(&mut self) -> Result<()> {
         for i in 0..(grid::GRID_WIDTH * grid::GRID_HEIGHT) {
-            let grid_2D = grid::Grid1D{x: i}.to_2D(grid::GRID_WIDTH);
-            let (x, y) = (grid_2D.x, grid_2D.y);
-            match self.grid.grid[i as usize] {
-                grid::BlockType::I => {
-                    self.stdout.goto((x * 2 + 1) as u16, (19 - y) as u16).unwrap();
-                    self.stdout.bg_color(Color::Rgb(5, 5, 5)).unwrap();
-                    self.stdout.write(b"  ").unwrap();
-                },
-                grid::BlockType::J => {
-                    self.stdout.goto((x * 2 + 1) as u16, (19 - y) as u16).unwrap();
-                    self.stdout.bg_color(Color::Rgb(5, 0, 0)).unwrap();
-                    self.stdout.write(b"  ").unwrap();
-                },
-                grid::BlockType::L => {
-                    self.stdout.goto((x * 2 + 1) as u16, (19 - y) as u16).unwrap();
-                    self.stdout.bg_color(Color::Rgb(0, 5, 0)).unwrap();
-                    self.stdout.write(b"  ").unwrap();
-                },
-                grid::BlockType::O => {
-                    self.stdout.goto((x * 2 + 1) as u16, (19 - y) as u16).unwrap();
-                    self.stdout.bg_color(Color::Rgb(0, 0, 5)).unwrap();
-                    self.stdout.write(b"  ").unwrap();
-                },
-                grid::BlockType::S => {
-                    self.stdout.goto((x * 2 + 1) as u16, (19 - y) as u16).unwrap();
-                    self.stdout.bg_color(Color::Rgb(5, 5, 0)).unwrap();
-                    self.stdout.write(b"  ").unwrap();
-                },
-                grid::BlockType::T => {
-                    self.stdout.goto((x * 2 + 1) as u16, (19 - y) as u16).unwrap();
-                    self.stdout.bg_color(Color::Rgb(5, 0, 5)).unwrap();
-                    self.stdout.write(b"  ").unwrap();
-                },
-                grid::BlockType::Z => {
-                    self.stdout.goto((x * 2 + 1) as u16, (19 - y) as u16).unwrap();
-                    self.stdout.bg_color(Color::Rgb(0, 5, 5)).unwrap();
-                    self.stdout.write(b"  ").unwrap();
-                },
-                grid::BlockType::Garbage => {
-                    self.stdout.goto((x * 2 + 1) as u16, (19 - y) as u16).unwrap();
-                    self.stdout.bg_color(Color::Rgb(2, 2, 2)).unwrap();
-                    self.stdout.write(b"  ").unwrap();
-                },
-                grid::BlockType::None => {
-                    self.stdout.goto((x * 2 + 1) as u16, (19 - y) as u16).unwrap();
-                    self.stdout.bg_color(Color::Rgb(0, 0, 0)).unwrap();
-                    self.stdout.write(b" .").unwrap();
-                },
-            }
+            let grid_2d = grid::Grid1D{x: i}.to_2D(grid::GRID_WIDTH);
+            let (x, y) = (grid_2d.x, grid_2d.y);
+
+            let block_type = self.grid.grid[i as usize];
+
+            write!(self.stdout, "{}{}{}", cursor::Goto((x * 2 + 2) as u16, (20 - y) as u16), color::Bg(block_type.to_color()), block_type.to_str())?;
         }
-        self.stdout.reset().unwrap();
+        write!(self.stdout, "{}", style::Reset)?;
+
+        Ok(())
     }
 }
-
-
