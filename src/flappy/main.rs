@@ -3,7 +3,8 @@
 /// * User-defined width and height
 /// * Tune speed, walls for better gameplay
 extern crate termion;
-use termion::{IntoRawMode, TermWrite, RawTerminal, async_stdin};
+use termion::{async_stdin, clear, cursor, style};
+use termion::raw::{IntoRawMode, RawTerminal};
 
 use std::collections::VecDeque;
 
@@ -84,9 +85,7 @@ impl<R: Read, W: Write> Game<R, W> {
     fn start(&mut self) {
         self.init();
 
-        self.stdout.clear().unwrap();
-        self.stdout.hide_cursor().unwrap();
-        self.stdout.write(WELCOME_SCREEN.as_bytes()).unwrap();
+        write!(self.stdout, "{}{}{}{}{}", clear::All, style::Reset, cursor::Goto(1, 1), cursor::Hide, WELCOME_SCREEN).unwrap();
         self.stdout.flush().unwrap();
 
         loop {
@@ -135,8 +134,7 @@ impl<R: Read, W: Write> Game<R, W> {
 
 
     fn draw(&mut self) {
-        self.stdout.clear().unwrap();
-        self.stdout.goto(0, 0).unwrap();
+        write!(self.stdout, "{}{}", clear::All, cursor::Goto(1, 1)).unwrap();
         for _ in 0..WIDTH {
             self.stdout.write(&[WALL_CHAR]).unwrap();
         }
@@ -219,8 +217,7 @@ impl<R: Read, W: Write> Game<R, W> {
 
     /// Initializes the screen
     fn init(&mut self) {
-        self.stdout.clear().unwrap();
-        self.stdout.goto(0, 0).unwrap();
+        write!(self.stdout, "{}{}", clear::All, cursor::Goto(1, 1)).unwrap();
     }
 }
 
@@ -229,7 +226,7 @@ impl<R, W: Write> Drop for Game<R, W> {
     fn drop(&mut self) {
         // When done, restore the defaults to avoid messing with the terminal.
         // (same as in ice and minesweeper)
-        self.stdout.restore().unwrap();
+        write!(self.stdout, "{}{}{}{}", clear::All, style::Reset, cursor::Goto(1, 1), cursor::Show).unwrap();
         self.stdout.write(b"Distance traveled: ").unwrap();
         self.stdout.write(self.distance.to_string().as_bytes()).unwrap();
         self.stdout.write(b"\n\r").unwrap();
