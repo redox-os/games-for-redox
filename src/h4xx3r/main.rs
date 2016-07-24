@@ -538,7 +538,7 @@ fn main() {
 
     let mut n = 0;
 
-    write!(stdout, "{}{}{}", clear::All, style::Reset, cursor::Goto(1, 1));
+    write!(stdout, "{}{}{}", clear::All, style::Reset, cursor::Goto(1, 1)).unwrap();
 
     stdout.flush().unwrap();
 
