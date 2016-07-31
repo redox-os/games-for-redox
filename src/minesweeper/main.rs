@@ -29,29 +29,13 @@ struct Cell {
 }
 
 /// The string printed for flagged cells.
-#[cfg(target_os = "redox")]
-const FLAGGED: &'static str = "F";
-#[cfg(not(target_os = "redox"))]
 const FLAGGED: &'static str = "▓";
 /// The string printed for mines in the game over revealing.
-#[cfg(target_os = "redox")]
-const MINE: &'static str = "!";
-#[cfg(not(target_os = "redox"))]
 const MINE: &'static str = "█";
 /// The string printed for concealed cells.
-#[cfg(target_os = "redox")]
-const CONCEALED: &'static str = "#";
-#[cfg(not(target_os = "redox"))]
 const CONCEALED: &'static str = "▒";
 
 /// The game over screen.
-#[cfg(target_os = "redox")]
-const GAME_OVER: &'static str = "+-----------------+\n\r\
-                                 |----Game over----|\n\r\
-                                 | r | replay      |\n\r\
-                                 | q | quit        |\n\r\
-                                 +-----------------+";
-#[cfg(not(target_os = "redox"))]
 const GAME_OVER: &'static str = "╔═════════════════╗\n\r\
                                  ║───┬Game over────║\n\r\
                                  ║ r ┆ replay      ║\n\r\
@@ -59,35 +43,17 @@ const GAME_OVER: &'static str = "╔══════════════�
                                  ╚═══╧═════════════╝";
 
 /// The upper and lower boundary char.
-#[cfg(target_os = "redox")]
-const HORZ_BOUNDARY: &'static str = "-";
-#[cfg(not(target_os = "redox"))]
 const HORZ_BOUNDARY: &'static str = "─";
 /// The left and right boundary char.
-#[cfg(target_os = "redox")]
-const VERT_BOUNDARY: &'static str = "|";
-#[cfg(not(target_os = "redox"))]
 const VERT_BOUNDARY: &'static str = "│";
 
 /// The top-left corner
-#[cfg(target_os = "redox")]
-const TOP_LEFT_CORNER: &'static str = "+";
-#[cfg(not(target_os = "redox"))]
 const TOP_LEFT_CORNER: &'static str = "┌";
 /// The top-right corner
-#[cfg(target_os = "redox")]
-const TOP_RIGHT_CORNER: &'static str = "+";
-#[cfg(not(target_os = "redox"))]
 const TOP_RIGHT_CORNER: &'static str = "┐";
 /// The bottom-left corner
-#[cfg(target_os = "redox")]
-const BOTTOM_LEFT_CORNER: &'static str = "+";
-#[cfg(not(target_os = "redox"))]
 const BOTTOM_LEFT_CORNER: &'static str = "└";
 /// The bottom-right corner
-#[cfg(target_os = "redox")]
-const BOTTOM_RIGHT_CORNER: &'static str = "+";
-#[cfg(not(target_os = "redox"))]
 const BOTTOM_RIGHT_CORNER: &'static str = "┘";
 
 /// The help page.

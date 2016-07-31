@@ -9,34 +9,6 @@ use std::collections::VecDeque;
 use std::thread::sleep;
 use extra::rand::Randomizer;
 
-#[cfg(target_os = "redox")]
-mod graphics {
-    pub const TOP_LEFT_CORNER: &'static str = "+";
-    pub const TOP_RIGHT_CORNER: &'static str = "+";
-    pub const BOTTOM_LEFT_CORNER: &'static str = "+";
-    pub const BOTTOM_RIGHT_CORNER: &'static str = "+";
-    pub const VERTICAL_WALL: &'static str = "|";
-    pub const HORIZONTAL_WALL: &'static str = "-";
-    pub const VERTICAL_SNAKE_BODY: &'static str = "|";
-    pub const HORIZONTAL_SNAKE_BODY: &'static str = "-";
-    pub const SNAKE_HEAD: &'static str = "@";
-    pub const FOOD: &'static str = "$";
-    pub const GAME_OVER: &'static str = "+-----------------+\n\r\
-                                         |----Game over----|\n\r\
-                                         | r | replay      |\n\r\
-                                         | q | quit        |\n\r\
-                                         +-----------------+";
-    pub const GAME_START_PROMPT: &'static str = "+------------------------------+\n\r\
-                                                 |--Welcome to snake for Redox--|\n\r\
-                                                 |------------------------------|\n\r\
-                                                 | h | left                     |\n\r\
-                                                 | j | down      Press space    |\n\r\
-                                                 | k | up         to begin!     |\n\r\
-                                                 | l | right                    |\n\r\
-                                                 +------------------------------+";
-}
-
-#[cfg(not(target_os = "redox"))]
 mod graphics {
     pub const TOP_LEFT_CORNER: &'static str = "╔";
     pub const TOP_RIGHT_CORNER: &'static str = "╗";
