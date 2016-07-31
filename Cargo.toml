@@ -4,6 +4,10 @@ version = "0.1.0"
 authors = ["Ticki <Ticki@users.noreply.github.com>", "Marcelo Paez <paezao@users.noreply.github.com>", "Enrico <EGhiorzi@users.noreply.github.com>"]
 
 [dependencies]
+clap = "2.2"
+libgo = "0.1.0"
+rand = "0.3"
+rustyline = "0.2"
 termion = "1.0"
 
 [dependencies.extra]
@@ -40,3 +44,7 @@ path = "src/dem/main.rs"
 [[bin]]
 name = "reblox"
 path = "src/reblox/main.rs"
+
+[[bin]]
+name = "baduk"
+path = "src/baduk/main.rs"
