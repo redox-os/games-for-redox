@@ -6,7 +6,7 @@ authors = ["Ticki <Ticki@users.noreply.github.com>", "Marcelo Paez <paezao@users
 [dependencies]
 clap = "2.2"
 libgo = "0.1.0"
-rustyline = "0.2"
+liner = "0.1.2"
 termion = "1.0"
 
 [dependencies.extra]

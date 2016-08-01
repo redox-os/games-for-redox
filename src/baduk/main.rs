@@ -2,11 +2,12 @@
 
 extern crate clap;
 extern crate libgo;
-extern crate rustyline;
+extern crate liner;
 extern crate termion;
 
 use clap::{App, Arg};
-use std::io::{self, ErrorKind, Write, stdout};
+use std::cmp;
+use std::io::{self, Write, stdout};
 use std::net::SocketAddr;
 use std::str::FromStr;
 
@@ -14,14 +15,11 @@ use libgo::game::Game;
 use libgo::game::board::Board;
 use libgo::gtp::{self, AGENT_VERSION, gtp_connect};
 use libgo::gtp::command::Command;
-use rustyline::error::ReadlineError;
-use rustyline::Editor;
+use liner::Context;
 use termion::clear;
 use termion::color::{self, AnsiValue};
 use termion::cursor::Goto;
 use termion::raw::{IntoRawMode, RawTerminal};
-
-const PROMPT_HISTORY_FILE: &'static str = ".history.txt";
 
 fn main() {
     let matches = App::new("Play Go")
@@ -51,68 +49,42 @@ fn reset_screen(stdout: &mut RawTerminal<io::StdoutLock>) {
     stdout.flush().expect("reset_screen: failed to flush stdout");
 }
 
-fn read_from_prompt(prompt: &mut Editor, prompt_text: &str) -> Option<String> {
-    let line_result = prompt.readline(prompt_text);
-
-    // Hack to convert the prompt's EOL to "\n\r".
-    print!("\r");
-
-    match line_result {
-        Ok(line) => {
-            prompt.add_history_entry(&line);
-            Some(line)
-        },
-        Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {
-            None
-        },
-        Err(err) => {
-            panic!(err);
-        }
-    }
-}
-
-fn load_prompt_history(prompt: &mut Editor) {
-    if let Err(error) = prompt.load_history(PROMPT_HISTORY_FILE) {
-        if let ReadlineError::Io(ref error) = error {
-            println!("{:?}", error.kind());
-            if error.kind() == ErrorKind::NotFound {
-                return;
-            }
-        }
-        panic!(error);
-    }
-}
-
 /// Run the engine in interactive mode.
 pub fn start_interactive_mode() {
     let command_map = gtp::register_commands();
     let mut game = Game::new();
     let mut result_buffer = "\r\n Enter 'list_commands' for a full list of options.".to_owned();
-    let prompt_text = "GTP> ".to_owned();
-
-    let mut prompt = Editor::new();
-    load_prompt_history(&mut prompt);
+    let mut prompt = Context::new();
 
     let stdout = stdout();
     let mut stdout = stdout.lock().into_raw_mode().unwrap();
 
     loop {
+        let board_size = game.board().size();
+        let below_the_board = board_size as u16 + 3;
+
         reset_screen(&mut stdout);
         draw_board(game.board());
-        print!("\r\n{}", result_buffer);
 
-        write!(stdout, "{}", Goto(1, (game.board().size() + 3) as u16)).expect("goto failed");
+        let column_offset = 2 * board_size as u16 + 8;
+        let mut line_number = 0;
+        for line in result_buffer.lines() {
+            line_number += 1;
+            write!(stdout, "{}{}", Goto(column_offset, line_number), line).expect("failed write");
+        }
 
-        if let Some(line) = read_from_prompt(&mut prompt, &prompt_text) {
-            if let Some(command) = Command::from_line(&line) {
-                prompt.save_history(PROMPT_HISTORY_FILE).unwrap();
+        let gtp_line = cmp::max(line_number, below_the_board);
+        write!(stdout, "{}", Goto(1, gtp_line)).expect("goto failed");
 
-                let result = gtp::gtp_exec(&mut game, &command, &command_map);
-                result_buffer = gtp::command_result::display(command.id, result);
+        let line = prompt.read_line("GTP> ", &mut |_event_handler| {}).unwrap();
+        if let Some(command) = Command::from_line(&line) {
+            prompt.history.push(line.into()).unwrap();
 
-                if command.name == "quit" {
-                    break;
-                }
+            let result = gtp::gtp_exec(&mut game, &command, &command_map);
+            result_buffer = gtp::command_result::display(command.id, result);
+
+            if command.name == "quit" {
+                break;
             }
         }
     }
