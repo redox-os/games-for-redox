@@ -1,19 +1,15 @@
 #![cfg_attr(feature = "nightly", feature(io))]
 
-extern crate clap;
 extern crate libgo;
 extern crate liner;
 extern crate termion;
 
-use clap::{App, Arg};
 use std::cmp;
 use std::io::{self, Write, stdout};
-use std::net::SocketAddr;
-use std::str::FromStr;
 
 use libgo::game::Game;
 use libgo::game::board::Board;
-use libgo::gtp::{self, AGENT_VERSION, gtp_connect};
+use libgo::gtp;
 use libgo::gtp::command::Command;
 use liner::Context;
 use termion::clear;
@@ -22,26 +18,7 @@ use termion::cursor::Goto;
 use termion::raw::{IntoRawMode, RawTerminal};
 
 fn main() {
-    let matches = App::new("Play Go")
-        .about("\r\nA Go Text Protocol (GTP) engine with extensions.")
-        .version(AGENT_VERSION)
-        .arg(Arg::with_name("gtp-connect")
-            .long("gtp-connect")
-            .value_name("host:port")
-            .takes_value(true)
-            .help("Connects to host and port to receive GTP commands"))
-        .arg(Arg::with_name("gtp-mode")
-            .long("gtp-mode")
-            .help("Runs in GTP mode using stdin and stdout for communication"))
-        .get_matches();
-
-    if matches.is_present("gtp-mode") {
-        gtp::play_go();
-    } else if let Some(address) = matches.value_of("gtp-connect") {
-        gtp_connect::play_go(SocketAddr::from_str(&address).expect("failed to parse address"));
-    } else {
-        start_interactive_mode();
-    }
+    start_interactive_mode();
 }
 
 fn reset_screen(stdout: &mut RawTerminal<io::StdoutLock>) {
