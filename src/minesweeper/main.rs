@@ -6,6 +6,8 @@ extern crate extra;
 
 use termion::{clear, cursor, style};
 use termion::raw::IntoRawMode;
+use termion::input::TermRead;
+use termion::event::Key;
 
 use std::env;
 use std::io::{self, Read, Write};
@@ -138,7 +140,7 @@ fn init<W: Write, R: Read>(mut stdout: W, stdin: R, difficulty: u8, w: u16, h: u
             observed: false,
         }; w as usize * h as usize].into_boxed_slice(),
         points: 0,
-        stdin: stdin,
+        stdin: stdin.keys(),
         stdout: stdout,
         difficulty: difficulty,
     };
@@ -157,7 +159,7 @@ impl<R, W: Write> Drop for Game<R, W> {
     }
 }
 
-impl<R: Read, W: Write> Game<R, W> {
+impl<R: Iterator<Item=Result<Key, std::io::Error>>, W: Write> Game<R, W> {
     /// Get the grid position of a given coordinate.
     fn pos(&self, x: u16, y: u16) -> usize {
         y as usize * self.width as usize + x as usize
@@ -193,18 +195,18 @@ impl<R: Read, W: Write> Game<R, W> {
     fn start(&mut self) {
         loop {
             // Read a single byte from stdin.
-            let mut b = [0];
-            self.stdin.read(&mut b).unwrap();
-
-            // Collect it as entropy.
-            self.rand.write_u8(b[0]);
-
-            match b[0] {
-                b'h' | b'a' => self.x = self.left(self.x),
-                b'j' | b's' => self.y = self.down(self.y),
-                b'k' | b'w' => self.y = self.up(self.y),
-                b'l' | b'd' => self.x = self.right(self.x),
-                b' ' => {
+            let b = self.stdin.next().unwrap().unwrap();
+            use termion::event::Key::*;
+            if let Char(c) = b {
+                // Collect it as entropy.
+                self.rand.write_u8(c as u8);
+            }
+            match b {
+                Char('h') | Char('a') | Left  => self.x = self.left(self.x),
+                Char('j') | Char('s') | Down  => self.y = self.down(self.y),
+                Char('k') | Char('w') | Up    => self.y = self.up(self.y),
+                Char('l') | Char('d') | Right => self.x = self.right(self.x),
+                Char(' ') => {
                     // Check if it was a mine.
                     let (x, y) = (self.x, self.y);
                     if self.get(x, y).mine {
@@ -221,13 +223,13 @@ impl<R: Read, W: Write> Game<R, W> {
 
                     self.print_points();
                 },
-                b'f' => self.set_flag(),
-                b'F' => self.remove_flag(),
-                b'r' => {
+                Char('f') => self.set_flag(),
+                Char('F') => self.remove_flag(),
+                Char('r') => {
                     self.restart();
                     return;
                 }
-                b'q' => return,
+                Char('q') => return,
                 _ => {},
             }
 
@@ -372,16 +374,13 @@ impl<R: Read, W: Write> Game<R, W> {
 
         loop {
             // Repeatedly read a single byte.
-            let mut buf = [0];
-            self.stdin.read(&mut buf).unwrap();
-
-            match buf[0] {
-                b'r' => {
+            match self.stdin.next().unwrap().unwrap() {
+                Key::Char('r') => {
                     // Replay!
                     self.restart();
                     return;
                 },
-                b'q' => return,
+                Key::Char('q') => return,
                 _ => {},
             }
         }
