@@ -1,118 +1,152 @@
-//! A simple Reversi game written in Rust with love
+//! RUSThello (ver. 2.0.0)
+//! A simple Reversi game written in Rust with love.
+//! Based on `reversi` library (by the same author).
+//! Released under MIT license.
 //! by Enrico Ghiorzi
 
-//extern crate rand;
+#![crate_name = "rusthello"]
+#![crate_type = "bin"]
+#![feature(rand)]
 
-// Import modules
-mod reversi;
+// External crates
+extern crate termion;
+extern crate rand;
+
+// Modules
 mod interface;
-mod players;
+mod human_player;
+mod ai_player;
+mod reversi;
 
+use reversi::{ReversiError, Side};
+use reversi::game::{PlayerAction, IsPlayer, Game};
+use interface::UserCommand;
+use std::result;
+use std::cmp::Ordering;
 
+pub enum OtherAction {
+    Help,
+    Quit,
+}
 
-pub fn main() {
+pub type Action = PlayerAction<OtherAction>;
+pub type Result<T> = result::Result<T, ReversiError>;
+
+fn main() {
     // Main intro
-    println!("{}", interface::INTRO);
+    interface::intro();
 
     loop {
-        println!("{}", interface::MAIN_MENU);
+        interface::main_menu();
 
         match interface::input_main_menu() {
             // Runs the game
-            interface::UserCommand::NewGame => play_game(),
+            UserCommand::NewGame => {
+                if play_game().is_err() {
+                    panic!("Match ended with an error!");
+                }
+            }
             // Prints help message
-            interface::UserCommand::Help => println!("{}", interface::HELP),
+            UserCommand::Help => interface::help(),
+            // Print credits
+            UserCommand::Credits => interface::credits(),
             // Quit RUSThello
-            interface::UserCommand::Quit => break,
+            UserCommand::Quit => {
+                interface::quitting_message(None);
+                break;
+            }
             _ => panic!("Main got a user command it shouldn't have got!"),
         }
     }
 }
 
-
-
-fn play_game() {
+fn play_game() -> Result<()> {
 
     // Get the two players
-    println!("{}", interface::NEW_PLAYER_MENU);
-    let dark = match interface::new_player(reversi::Disk::Dark) {
-        None => return,
-        Some(player) => player,
+    interface::new_player_menu();
+    let mut dark_human = false;
+    let dark = match interface::choose_new_player(Side::Dark) {
+        UserCommand::Quit => return Ok(()),
+        UserCommand::HumanPlayer => {
+            dark_human = true;
+            Box::new(human_player::HumanPlayer) as Box<IsPlayer<OtherAction>>
+        }
+        UserCommand::AiWeak => Box::new(ai_player::AiPlayer::Weak) as Box<IsPlayer<OtherAction>>,
+        UserCommand::AiMedium => Box::new(ai_player::AiPlayer::Medium) as Box<IsPlayer<OtherAction>>,
+        UserCommand::AiStrong => Box::new(ai_player::AiPlayer::Strong) as Box<IsPlayer<OtherAction>>,
+        _ => panic!("Returned an invalid player choice"),
     };
-    let light = match interface::new_player(reversi::Disk::Light) {
-        None => return,
-        Some(player) => player,
+    let mut light_human = false;
+    let light = match interface::choose_new_player(Side::Light) {
+        UserCommand::Quit => return Ok(()),
+        UserCommand::HumanPlayer => {
+            light_human = true;
+            Box::new(human_player::HumanPlayer) as Box<IsPlayer<OtherAction>>
+        }
+        UserCommand::AiWeak => Box::new(ai_player::AiPlayer::Weak) as Box<IsPlayer<OtherAction>>,
+        UserCommand::AiMedium => Box::new(ai_player::AiPlayer::Medium) as Box<IsPlayer<OtherAction>>,
+        UserCommand::AiStrong => Box::new(ai_player::AiPlayer::Strong) as Box<IsPlayer<OtherAction>>,
+        _ => panic!("Returned an invalid player choice"),
     };
+
+    // Print commands info
+    interface::commands_info();
 
     // Create a new game
-    let mut game = reversi::Game::new();
-    let mut hystory: Vec<reversi::Game> = Vec::new();
-
-    println!("{}", interface::COMMANDS_INFO);
+    let mut game = Game::new(&*dark, &*light);
 
     // Draw the current board and game info
-    interface::draw_board(&game);
+    interface::draw_board(game.get_current_turn());
 
     // Proceed with turn after turn till the game ends
-    'turn: while let reversi::Status::Running { current_turn } = game.get_status() {
-
-        // If the game is running, get the coordinates of the new move from the right player
-        let action = match current_turn {
-            reversi::Disk::Light => light.make_move(&game),
-            reversi::Disk::Dark  =>  dark.make_move(&game),
-        };
-
-        match action {
-            // If the new move is valid, perform it; otherwise panic
-            // Player's make_move method is responsible for returning a legal move
-            // so the program should never print this message unless something goes horribly wrong
-            interface::UserCommand::Move(row, col) => {
-
-                if game.check_move((row, col)) {
-                    hystory.push(game.clone());
-                    game.make_move((row, col));
-                    interface::draw_board(&game);
-                } else {
-                    panic!("Invalid move sent to main::game!");
-                }
-            }
-
-            // Manage hystory
-            interface::UserCommand::Undo => {
-                let mut recovery: Vec<reversi::Game> = Vec::new();
-
-                while let Some(previous_game) = hystory.pop() {
-                    recovery.push(previous_game.clone());
-                    if let reversi::Status::Running { current_turn: previous_player } = previous_game.get_status() {
-                        if previous_player == current_turn {
-                            game = previous_game;
-                            interface::draw_board(&game);
-                            continue 'turn;
+    while !game.is_ended() {
+        let state_side = game.get_current_state().unwrap();
+        match game.play_turn() {
+            Ok(action) => {
+                match action {
+                    PlayerAction::Move(coord) => {
+                        match state_side {
+                            Side::Dark => {
+                                if !dark_human {
+                                    interface::move_message(state_side, coord);
+                                }
+                            }
+                            Side::Light => {
+                                if !light_human {
+                                    interface::move_message(state_side, coord);
+                                }
+                            }
                         }
+                        interface::draw_board(game.get_current_turn());
+                    }
+                    PlayerAction::Undo => interface::draw_board(game.get_current_turn()),
+                    PlayerAction::Other(OtherAction::Help) => {
+                        interface::help();
+                        interface::draw_board(game.get_current_turn());
+                    }
+                    PlayerAction::Other(OtherAction::Quit) => {
+                        interface::quitting_message(game.get_current_state());
+                        return Ok(());
                     }
                 }
-
-                while let Some(recovered_game) = recovery.pop() {
-                    hystory.push(recovered_game.clone());
+            }
+            Err(err) => {
+                match err {
+                    ReversiError::NoUndo => {
+                        interface::no_undo_message(game.get_current_state().unwrap())
+                    }
+                    _ => return Err(err),
                 }
-
-                interface::no_undo_message(current_turn);
-            }
-
-            interface::UserCommand::Help => {
-                println!("{}", interface::HELP);
-                interface::draw_board(&game);
-            }
-
-            // Quit Match
-            interface::UserCommand::Quit => {
-                interface::quitting_message(current_turn);
-                break;
-            }
-
-            _ => {
-                panic!("Something's wrong here!");
             }
         }
     }
+
+    let (score_dark, score_light) = game.get_current_score();
+    interface::endgame_message(match score_dark.cmp(&score_light) {
+        Ordering::Greater => Some(Side::Dark),
+        Ordering::Less => Some(Side::Light),
+        Ordering::Equal => None,
+    });
+
+    Ok(())
 }
