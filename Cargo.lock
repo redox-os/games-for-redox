@@ -4,18 +4,18 @@ version = "0.1.0"
 dependencies = [
  "extra 0.1.0 (git+https://github.com/redox-os/libextra.git)",
  "libgo 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "liner 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "termion 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "liner 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "termion 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "extra"
 version = "0.1.0"
-source = "git+https://github.com/redox-os/libextra.git#461bf1b2b9ea29a6f3dd13d688fdddc02d8b5b6a"
+source = "git+https://github.com/redox-os/libextra.git#4cc7d75ec9852e6279830dce106c6e5582f0c164"
 
 [[package]]
 name = "libc"
-version = "0.2.8"
+version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
@@ -28,10 +28,10 @@ dependencies = [
 
 [[package]]
 name = "liner"
-version = "0.1.2"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "termion 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "termion 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-width 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -40,15 +40,15 @@ name = "rand"
 version = "0.3.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "libc 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.2.16 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "termion"
-version = "1.0.3"
+version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "libc 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.2.16 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -56,3 +56,11 @@ name = "unicode-width"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
+[metadata]
+"checksum extra 0.1.0 (git+https://github.com/redox-os/libextra.git)" = "<none>"
+"checksum libc 0.2.16 (registry+https://github.com/rust-lang/crates.io-index)" = "408014cace30ee0f767b1c4517980646a573ec61a57957aeeabcac8ac0a02e8d"
+"checksum libgo 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "99a64661b7d5c8b2ccb779e3fb0ced098426bb9bfbded934aa76ef227300e0cf"
+"checksum liner 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)" = "4e6c746268f45f34e965025f1b6d928bfe21148e8417fab9fb36d399713e0df9"
+"checksum rand 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)" = "2791d88c6defac799c3f20d74f094ca33b9332612d9aef9078519c82e4fe04a5"
+"checksum termion 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "ce9884af069456867e19fd5648b8908d5c9378f586b2659aaa6f3a4088fdb867"
+"checksum unicode-width 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)" = "2d6722facc10989f63ee0e20a83cd4e1714a9ae11529403ac7e0afd069abc39e"
