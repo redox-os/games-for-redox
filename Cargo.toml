@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Ticki <Ticki@users.noreply.github.com>", "Marcelo Paez <paezao@users.noreply.github.com>", "Enrico <EGhiorzi@users.noreply.github.com>"]
 
 [dependencies]
-libgo = "0.1.0"
+#TODO: Fix on Redox libgo = "0.1.0"
 liner = "0.1.2"
 termion = "1.0"
 
@@ -35,14 +35,17 @@ path = "src/snake/main.rs"
 name = "flappy"
 path = "src/flappy/main.rs"
 
-[[bin]]
-name = "dem"
-path = "src/dem/main.rs"
+#[[bin]]
+#name = "dem"
+#path = "src/dem/main.rs"
 
 [[bin]]
 name = "reblox"
 path = "src/reblox/main.rs"
 
-[[bin]]
-name = "baduk"
-path = "src/baduk/main.rs"
+#[[bin]]
+#name = "baduk"
+#path = "src/baduk/main.rs"
+
+[replace]
+"rand:0.3.14" = { git = "https://github.com/redox-os/rand.git" }
