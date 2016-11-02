@@ -35,9 +35,9 @@ path = "src/snake/main.rs"
 name = "flappy"
 path = "src/flappy/main.rs"
 
-#[[bin]]
-#name = "dem"
-#path = "src/dem/main.rs"
+[[bin]]
+name = "dem"
+path = "src/dem/main.rs"
 
 [[bin]]
 name = "reblox"
@@ -46,6 +46,10 @@ path = "src/reblox/main.rs"
 #[[bin]]
 #name = "baduk"
 #path = "src/baduk/main.rs"
+
+[[bin]]
+name = "commie"
+path = "src/commie/main.rs"
 
 [replace]
 "rand:0.3.14" = { git = "https://github.com/redox-os/rand.git" }
