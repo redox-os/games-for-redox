@@ -50,6 +50,3 @@ path = "src/reblox/main.rs"
 [[bin]]
 name = "commie"
 path = "src/commie/main.rs"
-
-[replace]
-"rand:0.3.14" = { git = "https://github.com/redox-os/rand.git" }
