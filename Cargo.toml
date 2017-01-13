@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Ticki <Ticki@users.noreply.github.com>", "Marcelo Paez <paezao@users.noreply.github.com>", "Enrico <EGhiorzi@users.noreply.github.com>"]
 
 [dependencies]
-#TODO: Fix on Redox libgo = "0.1.0"
+libgo = "0.1.0"
 liner = "0.1.2"
 termion = "1.0"
 
@@ -43,9 +43,9 @@ path = "src/dem/main.rs"
 name = "reblox"
 path = "src/reblox/main.rs"
 
-#[[bin]]
-#name = "baduk"
-#path = "src/baduk/main.rs"
+[[bin]]
+name = "baduk"
+path = "src/baduk/main.rs"
 
 [[bin]]
 name = "commie"
