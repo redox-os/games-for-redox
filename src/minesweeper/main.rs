@@ -193,6 +193,7 @@ impl<R: Iterator<Item=Result<Key, std::io::Error>>, W: Write> Game<R, W> {
     ///
     /// This will listen to events and do the appropriate actions.
     fn start(&mut self) {
+        let mut first_click = true;
         loop {
             // Read a single byte from stdin.
             let b = self.stdin.next().unwrap().unwrap();
@@ -209,6 +210,24 @@ impl<R: Iterator<Item=Result<Key, std::io::Error>>, W: Write> Game<R, W> {
                 Char(' ') => {
                     // Check if it was a mine.
                     let (x, y) = (self.x, self.y);
+                    if first_click {
+						loop {
+							for &(x, y) in self.adjacent(x, y).iter() {
+								if self.get(x, y).mine {
+									for i in 0..self.grid.len() {
+										self.grid[i] = Cell {
+											mine: false,
+											revealed: false,
+											observed: false,
+										};
+									}
+									continue;
+								}
+							}
+							break;
+						}
+						first_click = false;
+					}
                     if self.get(x, y).mine {
                         self.game_over();
                         return;
