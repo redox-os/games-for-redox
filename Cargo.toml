@@ -46,3 +46,7 @@ path = "src/reblox/main.rs"
 [[bin]]
 name = "baduk"
 path = "src/baduk/main.rs"
+
+[[bin]]
+name = "commie"
+path = "src/commie/main.rs"

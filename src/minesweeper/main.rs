@@ -486,6 +486,7 @@ fn main() {
 
     loop {
         // Read the arguments.
+        // Does not use a for loop because each argument may have second parameter.
 
         let arg = if let Some(x) = args.next() {
             x
@@ -545,6 +546,10 @@ fn main() {
     // We go to raw mode to make the control over the terminal more fine-grained.
     let stdout = stdout.into_raw_mode().unwrap();
 
+    let termsize = termion::terminal_size().ok();
+    let termwidth = termsize.map(|(w,_)| w - 2);
+    let termheight = termsize.map(|(_,h)| h - 2);
     // Initialize the game!
-    init(stdout, stdin, diff, width.unwrap_or(70), height.unwrap_or(40));
+    init(stdout, stdin, diff, width.or(termwidth).unwrap_or(70),
+                              height.or(termheight).unwrap_or(40));
 }

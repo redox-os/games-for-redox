@@ -1,12 +1,10 @@
-#![feature(iter_arith)]
-
 #[macro_use]
 extern crate extra;
 
 use extra::io::WriteExt;
 
 use std::collections::HashMap;
-use std::io::{self, BufRead, Write};
+use std::io::{self, BufRead, BufReader, Write};
 use std::mem;
 
 /// The number of factors.
@@ -240,7 +238,7 @@ impl Game {
         let stdout = io::stdout();
         let mut stdout = stdout.lock();
 
-        let mut lines = stdin.lock().lines().map(|x| x.unwrap());
+        let mut lines = BufReader::new(stdin.lock()).lines().map(|x| x.unwrap());
 
         stdout.writeln("<< Welcome to Dem, the commandline-based Democracy clone. 'help' for help. >>".as_bytes()).unwrap();
         loop {
