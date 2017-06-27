@@ -28,38 +28,24 @@ pub enum UserCommand {
 
 const COLUMN_WIDTH: u8 = 25;
 
-fn ruler() {
-    let mut ruler = "\t".to_string();
-    for _ in 0..COLUMN_WIDTH {
-        ruler.push('-');
-    }
-    println!("{}", ruler);
+fn ruler() -> String {
+	format!("\t{:-^1$}", "", COLUMN_WIDTH as usize)
 }
 
-fn header(title: &str) {
-    print!("\n\n\n {}", style::Bold);
-    ruler();
-    let middle = (COLUMN_WIDTH - title.len() as u8 - 2) / 2;
-    let mut header = "\t".to_string();
-    for _ in 0..middle {
-        header.push('-');
-    }
-    header.push_str(&format!(" {} ", title));
-    for _ in (middle + title.len() as u8 + 2)..COLUMN_WIDTH {
-        header.push('-');
-    }
-    println!("{}", header);
-    ruler();
-    print!("{}", style::Reset);
+fn header(title: &str) -> String {
+	let formatted_title = format!("\t{:-^1$}", String::from(" ") + title + " ", COLUMN_WIDTH as usize);
+    format!("\n\n\n {}{}\n{}\n{}{}", style::Bold,
+	 								ruler(),
+									formatted_title,
+									ruler(),
+								 	style::Reset)
 }
 
 const INTRO: &'static str = "\t  a simple Reversi game
 \twritten in Rust with love";
 
 pub fn intro() {
-    header("RUSThello");
-    println!("{}", INTRO);
-    println!("\t        v. 2.1.0");
+    println!("{}\n{}\n\t        v. 2.2.0", header("RUSThello"), INTRO);
 }
 
 const MAIN_MENU: &'static str = "\tn - New match
@@ -68,9 +54,7 @@ const MAIN_MENU: &'static str = "\tn - New match
 \tq - Quit RUSThello";
 
 pub fn main_menu() {
-    header("MAIN MENU");
-    println!("{}", MAIN_MENU);
-    ruler();
+    println!("{}\n{}\n{}", header("MAIN MENU"), MAIN_MENU, ruler());
 }
 
 const NEW_PLAYER_MENU: &'static str = "\th - Human Player
@@ -80,9 +64,7 @@ const NEW_PLAYER_MENU: &'static str = "\th - Human Player
 \tq - Quit match";
 
 pub fn new_player_menu() {
-    header("CHOOSE PLAYER");
-    println!("{}", NEW_PLAYER_MENU);
-    ruler();
+    println!("{}\n{}\n{}", header("CHOOSE PLAYER"), NEW_PLAYER_MENU, ruler());
 }
 
 const COMMANDS_INFO: &'static str = "\n\n
@@ -98,15 +80,15 @@ pub fn commands_info() {
 }
 
 const HELP: &'static str = "\tReversi is a board game where two players compete against each other. \
-The game is played on a 8x8 board, just like chess but for the cells’ color which is always green. \
-There are 64 identical pieces called disks, which are white on one side and black on the other. \
+The game is played on a 8x8 board with green cells. \
+There are 64 identical pieces called disks that are white on one side and black on the other. \
 A player is Dark, using disks’ black side, and the other one is Light, using disks' white side. \
-The game starts with four disks already placed at the centre of the board, two for each side. \
+The game starts with four disks at the center of the board, two for each side. \
 Dark moves first.\n
-\tLet’s say it’s Dark’s turn, for simplicity's sake, as for Light the rules are just the same. \
-Dark has to place a disk in a free square of the board, with the black side facing up. \
+\tLet’s say it’s Dark’s turn for simplicity's sake; as for Light, the rules are the same. \
+Dark has to place a disk in a free square on the board with the black side facing up. \
 Whenever the newly placed black disk and any other previously placed black disk enclose a sequence of white disks \
-(horizontal, vertical or diagonal and of any length), all of those flip and turn black. \
+(horizontal, vertical or diagonal and of any length), all flip and turn black. \
 It is mandatory to place the new disk such that at least a white disk is flipped, \
 otherwise the move is not valid.\n
 \tUsually players’ turn alternate, passing from one to the other. \
@@ -115,34 +97,32 @@ thus allowing the same player to play consecutive turns. \
 When neither player can play a legal move, the game ends. \
 Usually, this happens when the board is completely filled up with disks (for a total of 60 turns). \
 Sometimes a game also happens to end before that, leaving empty cells on the board.\n
-\tWhen the game ends, the player with more disks turned to its side wins. \
-Ties are possible as well, if both player have the same number of disks.";
+\tWhen the game ends, the player with the most disks wins. \
+Ties are possible as well, if both players have the same number of disks.";
 
-const RUSTHELLO: &'static str = "\tTo play RUSThello you first have to choose who is playing on each side, Dark and Light. \
+const RUSTHELLO: &'static str = "\tTo play RUSThello, you first have to choose who is playing on each side, Dark and Light. \
 You can choose a human players or an AI. \
 Choose human for both players and challenge a friend, or test your skills against an AI, \
-or even relax as you watch two AIs competing against each other: all combinations are possible!\n
+or even relax as you watch two AIs competing against each other; any combination is possible!\n
 \tAs a human player, you move by entering the coordinates (a letter and a number) \
 of the cell you want to place your disk on. \
 E.g. all of 'c4', 'C4', '4c' and '4C' are valid and equivalent coordinates. \
-For your ease of use, all legal moves on the board are highlighted.\n
-\tFurthermore, on your turn you can also input special commands: \
-'undo' (or 'u') to undo your last move (and yes, you can 'undo' as many times as you like), \
-'help' (or 'h') to see this help message again, and 'quit' (or 'q') to quit the game.";
+For ease of use, all legal moves on the board are highlighted.\n
+\tFurthermore, you can also input special commands:
+\t* 'undo' (or 'u') to undo your last move (and yes, you can 'undo' as many times as you like),
+\t* 'help' (or 'h') to see this help message again, and 'quit' (or 'q') to quit the game.";
 
 pub fn help() {
-    header("REVERSI");
-    println!("{}", HELP);
-    header("RUSThello");
-    println!("{}", RUSTHELLO);
+    println!("{}\n{}", header("REVERSI"), HELP);
+    println!("{}\n{}", header("RUSThello"), RUSTHELLO);
 }
 
 pub fn credits() {
-    header("CREDITS");
-    println!("\tRUSThello v. {}", env!("CARGO_PKG_VERSION"));
-    println!("\tby Enrico Ghiorzi");
-    println!("\tCopyright (c) 2015-2017 by Enrico Ghiorzi");
-    println!("\tReleased under the MIT license");
+    println!("{}\n\tRUSThello v. 2.2.0
+	by Enrico Ghiorzi
+	Copyright (c) 2015-2017 by Enrico Ghiorzi
+	Released under the MIT license",
+		header("CREDITS"));
 }
 
 /// Reads user's input

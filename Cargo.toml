@@ -14,7 +14,7 @@ termion = "1.4.*"
 git = "https://github.com/redox-os/libextra.git"
 
 [dependencies.reversi]
-version = "0.4.*"
+version = "0.5.*"
 git = "https://github.com/EGhiorzi/reversi/"
 
 [[bin]]
@@ -28,6 +28,10 @@ path = "src/ice/main.rs"
 [[bin]]
 name = "h4xx3r"
 path = "src/h4xx3r/main.rs"
+
+[lib]
+name = "rusthello_lib"
+path = "src/rusthello/lib.rs"
 
 [[bin]]
 name = "rusthello"

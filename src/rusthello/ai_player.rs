@@ -228,8 +228,8 @@ impl AiPlayer {
                                                                               Coord::new(7, 6),
                                                                               Coord::new(7, 5))];
 
-        let mut score_light: u16 = 1;
-        let mut score_dark: u16 = 1;
+        let mut score_light: u16 = 0;
+        let mut score_dark: u16 = 0;
 
         for &(corner, odd, odd_corner, even, even_corner, counter_odd, counter_even) in &sides {
 

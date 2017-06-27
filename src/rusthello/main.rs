@@ -1,4 +1,4 @@
-//! `RUSThello` (v. 2.1.0)
+//! `RUSThello`
 //! A simple Reversi game written in Rust with love.
 //! Based on `reversi` library (by the same author).
 //! Released under MIT license.
@@ -6,31 +6,18 @@
 
 #![crate_name = "rusthello"]
 #![crate_type = "bin"]
+#![cfg_attr(feature="clippy", feature(plugin))]
+#![cfg_attr(feature="clippy", plugin(clippy))]
 
-// External crates
-extern crate rand;
-extern crate rayon;
+extern crate rusthello_lib;
 extern crate reversi;
-extern crate termion;
-
-// Modules
-mod interface;
-mod human_player;
-mod ai_player;
 
 use reversi::{ReversiError, Side};
 use reversi::game::{PlayerAction, IsPlayer, Game};
-use interface::UserCommand;
-use std::result;
+use rusthello_lib::{OtherAction, Result};
+use rusthello_lib::{interface, human_player, ai_player};
+use rusthello_lib::interface::{UserCommand};
 use std::cmp::Ordering;
-
-pub enum OtherAction {
-    Help,
-    Quit,
-}
-
-pub type Action = PlayerAction<OtherAction>;
-pub type Result<T> = result::Result<T, ReversiError>;
 
 fn main() {
     // Main intro
