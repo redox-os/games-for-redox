@@ -1,0 +1,83 @@
+[root]
+name = "games-for-redox"
+version = "0.1.0"
+dependencies = [
+ "extra 0.1.0 (git+https://github.com/redox-os/libextra.git)",
+ "libgo 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "liner 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "termion 1.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "extra"
+version = "0.1.0"
+source = "git+https://github.com/redox-os/libextra.git#402932084acd5fef4812945887ceaaa2ddd5f264"
+
+[[package]]
+name = "libc"
+version = "0.2.28"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "libgo"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "rand 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "liner"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "termion 1.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "unicode-width 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "rand"
+version = "0.3.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "libc 0.2.28 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "redox_syscall"
+version = "0.1.27"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "redox_termios"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "redox_syscall 0.1.27 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "termion"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "libc 0.2.28 (registry+https://github.com/rust-lang/crates.io-index)",
+ "redox_syscall 0.1.27 (registry+https://github.com/rust-lang/crates.io-index)",
+ "redox_termios 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "unicode-width"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[metadata]
+"checksum extra 0.1.0 (git+https://github.com/redox-os/libextra.git)" = "<none>"
+"checksum libc 0.2.28 (registry+https://github.com/rust-lang/crates.io-index)" = "bb7b49972ee23d8aa1026c365a5b440ba08e35075f18c459980c7395c221ec48"
+"checksum libgo 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "99a64661b7d5c8b2ccb779e3fb0ced098426bb9bfbded934aa76ef227300e0cf"
+"checksum liner 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)" = "f9e406164c25b420480023985bdf65cef366855666ad4cb12cd3eaee82dcb399"
+"checksum rand 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)" = "022e0636ec2519ddae48154b028864bdce4eaf7d35226ab8e65c611be97b189d"
+"checksum redox_syscall 0.1.27 (registry+https://github.com/rust-lang/crates.io-index)" = "80dcf663dc552529b9bfc7bdb30ea12e5fa5d3545137d850a91ad410053f68e9"
+"checksum redox_termios 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "bc495930de8d330f14856cface52561b7d79a072c76e438cf8f34d7233a35fa7"
+"checksum termion 1.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "8affd752d0f2c7127d6d5f1b98182a5471606b48b1a955165d39eb5e4887ceba"
+"checksum unicode-width 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)" = "bf3a113775714a22dcb774d8ea3655c53a32debae63a063acc00a91cc586245f"
