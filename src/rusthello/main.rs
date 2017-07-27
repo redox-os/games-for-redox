@@ -1,4 +1,4 @@
-//! RUSThello (ver. 2.0.0)
+//! `RUSThello`
 //! A simple Reversi game written in Rust with love.
 //! Based on `reversi` library (by the same author).
 //! Released under MIT license.
@@ -6,31 +6,18 @@
 
 #![crate_name = "rusthello"]
 #![crate_type = "bin"]
-#![feature(rand)]
+#![cfg_attr(feature="clippy", feature(plugin))]
+#![cfg_attr(feature="clippy", plugin(clippy))]
 
-// External crates
-extern crate termion;
-extern crate rand;
-
-// Modules
-mod interface;
-mod human_player;
-mod ai_player;
-mod reversi;
+extern crate rusthello_lib;
+extern crate reversi;
 
 use reversi::{ReversiError, Side};
 use reversi::game::{PlayerAction, IsPlayer, Game};
-use interface::UserCommand;
-use std::result;
+use rusthello_lib::{OtherAction, Result};
+use rusthello_lib::{interface, human_player, ai_player};
+use rusthello_lib::interface::{UserCommand};
 use std::cmp::Ordering;
-
-pub enum OtherAction {
-    Help,
-    Quit,
-}
-
-pub type Action = PlayerAction<OtherAction>;
-pub type Result<T> = result::Result<T, ReversiError>;
 
 fn main() {
     // Main intro
@@ -99,7 +86,7 @@ fn play_game() -> Result<()> {
     interface::draw_board(game.get_current_turn());
 
     // Proceed with turn after turn till the game ends
-    while !game.is_ended() {
+    while !game.is_endgame() {
         let state_side = game.get_current_state().unwrap();
         match game.play_turn() {
             Ok(action) => {
@@ -132,21 +119,19 @@ fn play_game() -> Result<()> {
             }
             Err(err) => {
                 match err {
-                    ReversiError::NoUndo => {
-                        interface::no_undo_message(game.get_current_state().unwrap())
-                    }
+                    ReversiError::NoUndo => interface::no_undo_message(game.get_current_turn().get_state().unwrap()),
                     _ => return Err(err),
                 }
             }
         }
     }
 
-    let (score_dark, score_light) = game.get_current_score();
+    let (score_dark, score_light) = game.get_current_turn().get_score();
     interface::endgame_message(match score_dark.cmp(&score_light) {
-        Ordering::Greater => Some(Side::Dark),
-        Ordering::Less => Some(Side::Light),
-        Ordering::Equal => None,
-    });
+                                   Ordering::Greater => Some(Side::Dark),
+                                   Ordering::Less => Some(Side::Light),
+                                   Ordering::Equal => None,
+                               });
 
     Ok(())
 }
