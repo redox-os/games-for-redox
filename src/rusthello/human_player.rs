@@ -4,7 +4,7 @@ use interface;
 use reversi::{turn, game};
 use ::{Action, Result};
 
-/// The type of human players. Its 'make_move' calls the interface to ask user for an input.
+/// The type of human players. Its `make_move` calls the interface to ask user for an input.
 pub struct HumanPlayer;
 
 impl game::IsPlayer<::OtherAction> for HumanPlayer {
