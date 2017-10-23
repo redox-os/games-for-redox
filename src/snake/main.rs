@@ -19,18 +19,18 @@ mod graphics {
     pub const VERTICAL_SNAKE_BODY: &'static str = "║";
     pub const HORIZONTAL_SNAKE_BODY: &'static str = "═";
     pub const SNAKE_HEAD: &'static str = "@";
-    pub const FOOD: &'static str = "⊛";
+    pub const FOOD: &'static str = "o";
     pub const GAME_OVER: &'static str = "╔═════════════════╗\n\r\
-                                         ║───┬Game over────║\n\r\
+                                         ║───┬GAME OVER────║\n\r\
                                          ║ r ┆ replay      ║\n\r\
                                          ║ q ┆ quit        ║\n\r\
                                          ╚═══╧═════════════╝";
     pub const GAME_START_PROMPT: &'static str = "╔══════════════════════════════╗\n\r\
-                                                 ║──Welcome to snake for Redox──║\n\r\
+                                                 ║──Welcome to Snake for Redox──║\n\r\
                                                  ║──────────────────────────────║\n\r\
                                                  ║ h ┆ left                     ║\n\r\
                                                  ║ j ┆ down      Press space    ║\n\r\
-                                                 ║ k ┆ up         to begin!     ║\n\r\
+                                                 ║ k ┆ up         to BEGIN!     ║\n\r\
                                                  ║ l ┆ right                    ║\n\r\
                                                  ╚═══╧══════════════════════════╝";
 
