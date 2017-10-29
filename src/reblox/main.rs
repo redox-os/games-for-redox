@@ -20,17 +20,17 @@ fn main() {
 }
 
 impl grid::BlockType {
-    pub fn to_color(&self) -> termion::color::Rgb {
+    pub fn to_color(&self) -> termion::color::AnsiValue {
         match *self {
-            grid::BlockType::I => color::Rgb(255, 255, 255),
-            grid::BlockType::J => color::Rgb(255, 0, 0),
-            grid::BlockType::L => color::Rgb(0, 255, 0),
-            grid::BlockType::O => color::Rgb(0, 0, 255),
-            grid::BlockType::S => color::Rgb(255, 255, 0),
-            grid::BlockType::T => color::Rgb(255, 0, 255),
-            grid::BlockType::Z => color::Rgb(0, 255, 255),
-            grid::BlockType::Garbage => color::Rgb(128, 128, 128),
-            _ => color::Rgb(0, 0, 0),
+            grid::BlockType::I => color::AnsiValue(15),
+            grid::BlockType::J => color::AnsiValue(9),
+            grid::BlockType::L => color::AnsiValue(10),
+            grid::BlockType::O => color::AnsiValue(12),
+            grid::BlockType::S => color::AnsiValue(11),
+            grid::BlockType::T => color::AnsiValue(13),
+            grid::BlockType::Z => color::AnsiValue(14),
+            grid::BlockType::Garbage => color::AnsiValue(7),
+            _ => color::AnsiValue(0),
         }
     }
 
