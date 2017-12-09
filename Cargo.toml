@@ -60,3 +60,7 @@ path = "src/baduk/main.rs"
 [[bin]]
 name = "commie"
 path = "src/commie/main.rs"
+
+[[bin]]
+name = "redoku"
+path = "src/redoku/main.rs"
