@@ -6,10 +6,34 @@ use termion::raw::{IntoRawMode, RawTerminal};
 use std::io::{self, Write, Read};
 use extra::rand::Randomizer;
 use std::collections::HashSet;
+use std::env;
 
 fn main() {
-    let stdout = io::stdout();
     let stdin = io::stdin();
+    let stdout = io::stdout();
+
+    let result = parse_args();
+    let mut exit = false;
+    match result {
+        Ok((b, s)) => {
+            if b {
+                println!("Using seed = {}", s);
+                let mut game = Game::new_no_raw(
+                    stdin.lock(),
+                    stdout.lock(),
+                    s.into_bytes());
+                game.generate();
+                game.simple_print_grid();
+                exit = true;
+            }
+        },
+        Err(c) => ::std::process::exit(c),
+    }
+    if exit {
+        // exit after game is destructed to revert terminal to original state
+        ::std::process::exit(0);
+    }
+
     let (vec, hidden_count) =
         get_settings(&mut stdin.lock(), &mut stdout.lock());
     let mut game = Game::new(stdin.lock(), stdout.lock(),
@@ -18,6 +42,57 @@ fn main() {
     game.generate();
     game.obfuscate_grid(hidden_count);
     game.run();
+}
+
+fn print_usage() {
+    println!("Usage: [-h | --help] [-s <seed>]");
+    println!("-h | --help - print this usage");
+    println!("-s <seed> - generate a puzzle, print it out, and exit");
+    println!("Run this program with no arguments to play redoku.");
+}
+
+fn parse_args() -> Result<(bool, String), i32> {
+    let mut first_arg = true;
+    let mut next_is_seed = false;
+    let mut result: Result<(bool, String), i32> = Ok((false, String::new()));
+    for arg in env::args() {
+        if first_arg {
+            first_arg = false;
+            continue;
+        }
+        if next_is_seed {
+            next_is_seed = false;
+            result = Ok((true, arg));
+        }
+        else {
+            match arg.as_str() {
+                "-h" | "--help" => {
+                    print_usage();
+                    return Err(0);
+                },
+                "-s" => {
+                    if next_is_seed {
+                        println!("ERROR: \"-s\" specified twice");
+                        print_usage();
+                        return Err(1);
+                    }
+                    next_is_seed = true;
+                },
+                _ => {
+                    println!("ERROR: Got invalid arguments ({})", arg);
+                    print_usage();
+                    return Err(2);
+                },
+            }
+        }
+    }
+
+    if next_is_seed {
+        println!("ERROR: \"-s\" specified but no seed was given");
+        return Err(3);
+    }
+
+    result
 }
 
 fn get_settings(stdin: &mut io::StdinLock, stdout: &mut io::StdoutLock) 
@@ -82,6 +157,22 @@ impl <R: Read, W: Write> Game<R, W> {
         Game {
             stdin: stdin,
             stdout: stdout.into_raw_mode().unwrap(),
+            grid: [0x80; 81],
+            rng: Randomizer::new(vec.iter().fold(
+                0u64, |acc, &x| acc + x as u64)),
+            x: 0,
+            y: 0,
+            show_solution: false,
+            wrong_input: false,
+            seed: String::from_utf8(vec).unwrap(),
+        }
+    }
+
+    fn new_no_raw(stdin: R, stdout: W, vec: Vec<u8>)
+            -> Game<R, W> {
+        Game {
+            stdin: stdin,
+            stdout: stdout,
             grid: [0x80; 81],
             rng: Randomizer::new(vec.iter().fold(
                 0u64, |acc, &x| acc + x as u64)),
@@ -441,6 +532,22 @@ impl <R: Read, W: Write> Game<R, W> {
             cursor::Goto(17, 5)).unwrap();
         write!(self.stdout, "{}r - reveal solution",
             cursor::Goto(17, 7)).unwrap();
+    }
+
+    fn simple_print_grid(&mut self) {
+        for i in 0..81 {
+            if i % 27 == 0 {
+                write!(self.stdout, "\n\r").unwrap();
+            }
+            if i % 9 == 0 {
+                write!(self.stdout, "\n\r").unwrap();
+            }
+            if i % 3 == 0 {
+                write!(self.stdout, " ").unwrap();
+            }
+            write!(self.stdout, "{}", self.grid[i] & 0xF).unwrap();
+        }
+        write!(self.stdout, "\n\r").unwrap();
     }
 }
 
