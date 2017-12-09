@@ -15,7 +15,7 @@ fn main() {
     let mut game = Game::new(stdin.lock(), stdout.lock(),
         vec);
 
-    while !game.generate() {}
+    game.generate();
     game.obfuscate_grid(hidden_count);
     game.run();
 }
@@ -93,51 +93,45 @@ impl <R: Read, W: Write> Game<R, W> {
         }
     }
 
-    fn generate(&mut self) -> bool {
+    fn generate(&mut self) {
+        write!(self.stdout, "Generating puzzle").unwrap();
         let mut possible: Vec<u8> = Vec::new();
-        for i in 0..81 {
-            if self.grid[i] != 0x80 {
-                continue;
-            }
-            // get possible
-            possible.clear();
-            let set = self.get_possible_inverse(i);
-            for j in 1..10 {
-                if !set.contains(&(j as u8)) {
-                    possible.push(j as u8);
+        'outer: loop {
+            for i in 0..81 {
+                if self.grid[i] != 0x80 {
+                    continue;
                 }
-            }
-            if possible.is_empty() {
-                write!(self.stdout, ".").unwrap();
-
-                let mut v: Vec<usize> = Vec::new();
-
-                // get row
-                let temp = i / 9 * 9;
-                for j in temp..(temp + 9) {
-                    if self.grid[j] & 0x80 == 0 {
-                        v.push(j);
+                // get possible
+                possible.clear();
+                let set = self.get_possible_inverse(i);
+                for j in 1..10 {
+                    if !set.contains(&(j as u8)) {
+                        possible.push(j as u8);
                     }
                 }
-                // get column
-                let mut temp = i % 9;
-                while temp < 81 {
-                    if self.grid[temp] & 0x80 == 0 {
-                        v.push(temp);
+                if possible.is_empty() {
+                    write!(self.stdout, ".").unwrap();
+
+                    let mut v: Vec<usize> = Vec::new();
+
+                    for j in 0..81 {
+                        if self.grid[j] != 0x80 {
+                            v.push(j);
+                        }
                     }
-                    temp += 9;
+
+                    for _x in 0..7 {
+                        let picked = self.rng.read_u8() as usize % v.len();
+                        self.grid[v[picked]] = 0x80;
+                    }
+                    continue 'outer;
                 }
-                for _x in 0..5 {
-                    self.grid[v[self.rng.read_u8() as usize % v.len()]] = 0x80;
-                }
-                return false;
+                // pick random possible
+                self.grid[i] =
+                    possible[self.rng.read_u8() as usize % possible.len()];
             }
-            // pick random possible
-            self.grid[i] =
-                possible[self.rng.read_u8() as usize % possible.len()];
+            break 'outer;
         }
-
-        true
     }
 
     fn get_possible_inverse(&mut self, index: usize) -> HashSet<u8> {
@@ -147,7 +141,7 @@ impl <R: Read, W: Write> Game<R, W> {
         if segment == 0 || segment == 3 || segment == 6 {
             for i in 0..9 {
                 let sindex: usize = i + i / 3 * 6;
-                if sindex != index && self.grid[sindex] & 0x80 == 0 {
+                if sindex != index && self.grid[sindex] != 0x80 {
                     set.insert(self.grid[sindex]);
                 }
             }
@@ -156,7 +150,7 @@ impl <R: Read, W: Write> Game<R, W> {
         else if segment == 1 || segment == 4 || segment == 7 {
             for i in 0..9 {
                 let sindex: usize = 3 + i + i / 3 * 6;
-                if sindex != index && self.grid[sindex] & 0x80 == 0 {
+                if sindex != index && self.grid[sindex] != 0x80 {
                     set.insert(self.grid[sindex]);
                 }
             }
@@ -165,7 +159,7 @@ impl <R: Read, W: Write> Game<R, W> {
         else if segment == 2 || segment == 5 || segment == 8 {
             for i in 0..9 {
                 let sindex: usize = 6 + i + i / 3 * 6;
-                if sindex != index && self.grid[sindex] & 0x80 == 0 {
+                if sindex != index && self.grid[sindex] != 0x80 {
                     set.insert(self.grid[sindex]);
                 }
             }
@@ -174,7 +168,7 @@ impl <R: Read, W: Write> Game<R, W> {
         else if segment == 9 || segment == 12 || segment == 15 {
             for i in 0..9 {
                 let sindex: usize = 27 + i + i / 3 * 6;
-                if sindex != index && self.grid[sindex] & 0x80 == 0 {
+                if sindex != index && self.grid[sindex] != 0x80 {
                     set.insert(self.grid[sindex]);
                 }
             }
@@ -183,7 +177,7 @@ impl <R: Read, W: Write> Game<R, W> {
         else if segment == 10 || segment == 13 || segment == 16 {
             for i in 0..9 {
                 let sindex: usize = 30 + i + i / 3 * 6;
-                if sindex != index && self.grid[sindex] & 0x80 == 0 {
+                if sindex != index && self.grid[sindex] != 0x80 {
                     set.insert(self.grid[sindex]);
                 }
             }
@@ -192,7 +186,7 @@ impl <R: Read, W: Write> Game<R, W> {
         else if segment == 11 || segment == 14 || segment == 17 {
             for i in 0..9 {
                 let sindex: usize = 33 + i + i / 3 * 6;
-                if sindex != index && self.grid[sindex] & 0x80 == 0 {
+                if sindex != index && self.grid[sindex] != 0x80 {
                     set.insert(self.grid[sindex]);
                 }
             }
@@ -201,7 +195,7 @@ impl <R: Read, W: Write> Game<R, W> {
         else if segment == 18 || segment == 21 || segment == 24 {
             for i in 0..9 {
                 let sindex: usize = 54 + i + i / 3 * 6;
-                if sindex != index && self.grid[sindex] & 0x80 == 0 {
+                if sindex != index && self.grid[sindex] != 0x80 {
                     set.insert(self.grid[sindex]);
                 }
             }
@@ -210,7 +204,7 @@ impl <R: Read, W: Write> Game<R, W> {
         else if segment == 19 || segment == 22 || segment == 25 {
             for i in 0..9 {
                 let sindex: usize = 57 + i + i / 3 * 6;
-                if sindex != index && self.grid[sindex] & 0x80 == 0 {
+                if sindex != index && self.grid[sindex] != 0x80 {
                     set.insert(self.grid[sindex]);
                 }
             }
@@ -219,7 +213,7 @@ impl <R: Read, W: Write> Game<R, W> {
         else if segment == 20 || segment == 23 || segment == 26 {
             for i in 0..9 {
                 let sindex: usize = 60 + i + i / 3 * 6;
-                if sindex != index && self.grid[sindex] & 0x80 == 0 {
+                if sindex != index && self.grid[sindex] != 0x80 {
                     set.insert(self.grid[sindex]);
                 }
             }
@@ -228,7 +222,7 @@ impl <R: Read, W: Write> Game<R, W> {
         // row
         let segment = index / 9 * 9;
         for i in segment..(segment + 9) {
-            if i != index && self.grid[i] & 0x80 == 0 {
+            if i != index && self.grid[i] != 0x80 {
                 set.insert(self.grid[i]);
             }
         }
@@ -236,7 +230,7 @@ impl <R: Read, W: Write> Game<R, W> {
         // column
         let mut segment = index % 9;
         while segment < 81 {
-            if segment != index && self.grid[segment] & 0x80 == 0 {
+            if segment != index && self.grid[segment] != 0x80 {
                 set.insert(self.grid[segment]);
             }
             segment += 9;
