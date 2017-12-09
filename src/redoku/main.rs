@@ -13,7 +13,6 @@ fn main() {
     let stdout = io::stdout();
 
     let result = parse_args();
-    let mut exit = false;
     match result {
         Ok((b, s)) => {
             if b {
@@ -24,14 +23,10 @@ fn main() {
                     s.into_bytes());
                 game.generate();
                 game.simple_print_grid();
-                exit = true;
+                ::std::process::exit(0);
             }
         },
         Err(c) => ::std::process::exit(c),
-    }
-    if exit {
-        // exit after game is destructed to revert terminal to original state
-        ::std::process::exit(0);
     }
 
     let (vec, hidden_count) =
