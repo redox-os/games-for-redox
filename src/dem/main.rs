@@ -307,13 +307,15 @@ impl Game {
                         pop  - Popularity\n\
                         debt - National debt").unwrap();
                 },
+                Some("exit") => break,
                 Some("help") | Some("h") => {
                     stdout.writeln(b"\
                         ls   - List factors\n\
                         inc  - Increment factor\n\
                         dec  - Decrement factor\n\
                         info - Get info about a given factor\n\
-                        next - Go to next round").unwrap();
+                        next - Go to next round\n
+                        exit - Exit the program").unwrap();
                 },
                 _ => {
                     stdout.writeln(b"No such command.").unwrap();
