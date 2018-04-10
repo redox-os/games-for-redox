@@ -72,7 +72,7 @@ flags:
     -c | --width N  ~ set the width of the grid.
     -h | --help     ~ this help page.
     -b              ~ beginner mode.
-    -i              ~ immediate mode.
+    -i              ~ intermediate mode.
     -a              ~ advanced mode.
     -g              ~ god mode.
 
