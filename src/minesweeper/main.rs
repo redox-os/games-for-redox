@@ -37,7 +37,7 @@ const FLAGGED: &'static str = "F";
 /// The string printed for mines in the game over revealing.
 const MINE: &'static str = "*";
 /// The string printed for concealed cells.
-const CONCEALED: &'static str = "▒";
+const CONCEALED: &'static str = "░";
 
 /// The game over screen.
 const GAME_OVER: &'static str = "╔═════════════════╗\n\r\
