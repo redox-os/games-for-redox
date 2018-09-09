@@ -4,7 +4,7 @@
 extern crate termion;
 extern crate extra;
 
-use termion::{clear, cursor, style};
+use termion::{clear, cursor, color, style};
 use termion::raw::IntoRawMode;
 use termion::input::TermRead;
 use termion::event::Key;
@@ -28,12 +28,14 @@ struct Cell {
     ///
     /// That is, is the state of this cell determined, or is it pending for randomization.
     observed: bool,
+    /// Does this flag contain a flag?
+    flagged: bool,
 }
 
 /// The string printed for flagged cells.
-const FLAGGED: &'static str = "▓";
+const FLAGGED: &'static str = "F";
 /// The string printed for mines in the game over revealing.
-const MINE: &'static str = "█";
+const MINE: &'static str = "*";
 /// The string printed for concealed cells.
 const CONCEALED: &'static str = "▒";
 
@@ -138,6 +140,7 @@ fn init<W: Write, R: Read>(mut stdout: W, stdin: R, difficulty: u8, w: u16, h: u
             mine: false,
             revealed: false,
             observed: false,
+            flagged: false,
         }; w as usize * h as usize].into_boxed_slice(),
         points: 0,
         stdin: stdin.keys(),
@@ -193,6 +196,7 @@ impl<R: Iterator<Item=Result<Key, std::io::Error>>, W: Write> Game<R, W> {
     ///
     /// This will listen to events and do the appropriate actions.
     fn start(&mut self) {
+        let mut first_click = true;
         loop {
             // Read a single byte from stdin.
             let b = self.stdin.next().unwrap().unwrap();
@@ -209,7 +213,26 @@ impl<R: Iterator<Item=Result<Key, std::io::Error>>, W: Write> Game<R, W> {
                 Char(' ') => {
                     // Check if it was a mine.
                     let (x, y) = (self.x, self.y);
+
+                    if first_click {
+                        // This is the player's first turn; clear all cells of
+                        // mines around the cursor.
+                        for &(x, y) in self.adjacent(x, y).iter() {
+                            self.get_mut(x, y).mine = false;
+                        }
+                        self.get_mut(x, y).mine = false;
+                        first_click = false;
+                    }
+
                     if self.get(x, y).mine {
+                        self.reveal_all();
+                        // Make the background colour of the mine we just
+                        // landed on red, and the foreground black.
+                        write!(self.stdout, "{}{}{}{}{}",
+                               cursor::Goto(x + 2, y + 2),
+                               color::Bg(color::Red), color::Fg(color::Black),
+                               MINE,
+                               style::Reset).unwrap();
                         self.game_over();
                         return;
                     }
@@ -223,8 +246,10 @@ impl<R: Iterator<Item=Result<Key, std::io::Error>>, W: Write> Game<R, W> {
 
                     self.print_points();
                 },
-                Char('f') => self.set_flag(),
-                Char('F') => self.remove_flag(),
+                Char('f') => {
+                    let (x, y) = (self.x, self.y);
+                    self.toggle_flag(x, y);
+                }
                 Char('r') => {
                     self.restart();
                     return;
@@ -239,13 +264,25 @@ impl<R: Iterator<Item=Result<Key, std::io::Error>>, W: Write> Game<R, W> {
         }
     }
 
-    /// Set a flag on the current cell.
-    fn set_flag(&mut self) {
-        self.stdout.write(FLAGGED.as_bytes()).unwrap();
+    /// Set a flag on cell.
+    fn set_flag(&mut self, x: u16, y: u16) {
+        if !self.get(x, y).revealed {
+            self.stdout.write(FLAGGED.as_bytes()).unwrap();
+            self.get_mut(x, y).flagged = true;
+        }
     }
-    /// Remove a flag on the current cell.
-    fn remove_flag(&mut self) {
+    /// Remove a flag on cell.
+    fn remove_flag(&mut self, x: u16, y: u16) {
         self.stdout.write(CONCEALED.as_bytes()).unwrap();
+        self.get_mut(x, y).flagged = false;
+    }
+    /// Place a flag on cell if unflagged, or remove it if present.
+    fn toggle_flag(&mut self, x: u16, y: u16) {
+        if !self.get(x, y).flagged {
+            self.set_flag(x, y);
+        } else {
+            self.remove_flag(x, y);
+        }
     }
 
     /// Reset the game.
@@ -294,6 +331,7 @@ impl<R: Iterator<Item=Result<Key, std::io::Error>>, W: Write> Game<R, W> {
                 mine: false,
                 revealed: false,
                 observed: false,
+                flagged: false,
             };
 
             self.points = 0;
@@ -363,9 +401,6 @@ impl<R: Iterator<Item=Result<Key, std::io::Error>>, W: Write> Game<R, W> {
 
     /// Game over!
     fn game_over(&mut self) {
-        // Reveal all cells, showing the player where the mines were.
-        self.reveal_all();
-
         //Goto top left corner
         write!(self.stdout, "{}", cursor::Goto(1, 1)).unwrap();
 
