@@ -29,6 +29,10 @@ path = "src/ice/main.rs"
 name = "h4xx3r"
 path = "src/h4xx3r/main.rs"
 
+[[bin]]
+name = "pom"
+path = "src/pom/main.rs"
+
 [lib]
 name = "rusthello_lib"
 path = "src/rusthello/lib.rs"
