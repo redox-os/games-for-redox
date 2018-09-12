@@ -8,7 +8,7 @@
 #![allow(non_upper_case_globals)]
 
 extern crate chrono;
-use chrono::{Local, DateTime, TimeZone};
+use chrono::{Local, DateTime, TimeZone, Utc};
 use chrono::offset;
 
 use std::env;
@@ -27,15 +27,17 @@ const HELP: &'static str = r#"
 pom ~ Phase of the Moon
 
 flags:
-    -h  | --help     ~ this help message.
-    -dt | --datetime ~ specify datetime in "YY-MM-DD HH:MM:SS" format
+    -h  | --help       ~ this help message.
+    -dt | --datetime   ~ specify datetime in "YY-MM-DD HH:MM:SS" format
+    -p  | --percentage ~ only print the percentage
 
 author:
     Árni Dagur <arni@dagur.eu>
 "#;
 
 // We define an epoch on which we shall base our calculations; here it is
-// 2010 January 0.0
+// 2010 January 0.0, equivilent to the midnight between 30. and 31. december of
+// 2009 (see section 3 for details).
 const EPSILON_g: f64 = 279.447208f64; // The Sun's mean ecliptic long at epoch.
 const RHO_g: f64 = 283.112438f64; // The longitude of the Sun at perigee.
 const ECC: f64 = 0.016705f64; // Eccintricity of the Sun-Earth orbit.
@@ -92,7 +94,7 @@ fn potm(days: f64) -> f64 {
     // Calculate the 'age' of the moon.
     let D = l_2prime - Lambda_sol;
     // The Moon's phase, F, on the scale from 0 to 100, is given by:
-    0.5 * (1.0 - D.to_radians().cos())
+    50.0 * (1.0 - D.to_radians().cos())
 }
 
 /// Adjusts value so 0 <= deg <= 360
@@ -110,17 +112,16 @@ fn adj360(mut deg: f64) -> f64 {
 }
 
 fn main() {
-    let mut args = env::args().skip(1);
-    println!("{}", potm(0.5));
-    println!("{:?}", args);
-
     let stdout = io::stdout();
     let mut stdout = stdout.lock();
     let stderr = io::stderr();
     let mut stderr = stderr.lock();
 
+    let epoch: DateTime<Utc> = offset::Utc.ymd(2009, 12, 31).and_hms(0, 0, 0);
     let mut datetime: DateTime<Local> = Local::now();
 
+    let mut args = env::args().skip(1);
+    let mut percentage_only = false;
     loop {
         // Read the arguments.
         let arg = if let Some(x) = args.next() {
@@ -149,6 +150,9 @@ fn main() {
                     process::exit(1);
                 });
             },
+            "-p" | "--percentage" => {
+                percentage_only = true;
+            },
             _ => {
                 stderr.write(b"Unknown argument.\n").unwrap();
                 stderr.flush().unwrap();
@@ -156,5 +160,42 @@ fn main() {
             }
         }
     }
-}
 
+    let seconds = datetime.signed_duration_since(epoch).num_seconds();
+    let days = seconds as f64 / 86400.0;
+    // Why add 0.05 ?
+    // let today = potm(days) + 0.5;
+    let today = potm(days);
+
+    if percentage_only {
+        println!("{}", today);
+        process::exit(0);
+    }
+
+    stdout.write(b"The moon is").unwrap();
+    if today.round() == 100.0 {
+        stdout.write(b"full\n").unwrap();
+    } else if today.round() == 0.0 {
+        stdout.write(b"new\n").unwrap();
+    } else {
+        let tomorrow = potm(days + 1.0);
+        if today.round() == 50.0 {
+            if tomorrow > today {
+                stdout.write(b"at the first quarter\n").unwrap();
+            } else {
+                stdout.write(b"at the last quarter\n").unwrap();
+            }
+        } else {
+            if tomorrow > today {
+                stdout.write(b" waxing ").unwrap();
+            } else {
+                stdout.write(b" waning ").unwrap();
+            }
+            if today > 50.0 {
+                println!("gibbous {}% of full", today)
+            } else {
+                println!("crescent {}% of full", today)
+            }
+        }
+    }
+}
