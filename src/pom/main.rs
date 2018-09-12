@@ -1,13 +1,20 @@
-#![allow(non_snake_case)]
-#![allow(non_upper_case_globals)]
-// vim: et:ts=4:sts=4:sw=4
-
 // This file is a part of Redox OS games, which is distributed under terms of
 // MIT license.
 //
 //     Copyright (c) 2018 Árni Dagur <arni@dagur.eu>
 //
-// Based on BSD games phase of the moon.
+// vim: et:ts=4:sts=4:sw=4
+#![allow(non_snake_case)]
+#![allow(non_upper_case_globals)]
+
+extern crate chrono;
+use chrono::{Local, DateTime, TimeZone};
+use chrono::offset;
+
+use std::env;
+use std::process;
+use std::io::{self, Write};
+use std::f64::consts::PI;
 
 /// Phase of the moon. Calculates the current phase of the moon based on
 /// routines from 'Practical Astronomy with Your Calculator or Spreadsheet' by
@@ -16,7 +23,16 @@
 //  Comments give the section from the book that particular piece of code was
 //  adapted from.
 
-use std::f64::consts::PI;
+const HELP: &'static str = r#"
+pom ~ Phase of the Moon
+
+flags:
+    -h  | --help     ~ this help message.
+    -dt | --datetime ~ specify datetime in "YY-MM-DD HH:MM:SS" format
+
+author:
+    Árni Dagur <arni@dagur.eu>
+"#;
 
 // We define an epoch on which we shall base our calculations; here it is
 // 2010 January 0.0
@@ -29,6 +45,8 @@ const L_0: f64 = 91.929335f64; // Moon's mean longitude at the epoch
 const P_0: f64 = 130.143076f64; // Moon's mean longitude of the perigee at epoch
 const N_0: f64 = 291.682547f64; // Moon's mean longitude of the node at epoch
 
+/// Calculate the phase of the moon given a certain number of days away from the
+/// epoch January 2010.
 fn potm(days: f64) -> f64 {
     //             Section 46: Calculating the position of the sun
     let n = adj360(FRAC_360_TROP_YEAR * days);
@@ -92,6 +110,51 @@ fn adj360(mut deg: f64) -> f64 {
 }
 
 fn main() {
-    println!("{:?}", potm(0.0))
+    let mut args = env::args().skip(1);
+    println!("{}", potm(0.5));
+    println!("{:?}", args);
+
+    let stdout = io::stdout();
+    let mut stdout = stdout.lock();
+    let stderr = io::stderr();
+    let mut stderr = stderr.lock();
+
+    let mut datetime: DateTime<Local> = Local::now();
+
+    loop {
+        // Read the arguments.
+        let arg = if let Some(x) = args.next() {
+            x
+        } else {
+            break;
+        };
+
+        match arg.as_str() {
+            "-h" | "--help" => {
+                stdout.write(HELP.as_bytes()).unwrap();
+                stdout.flush().unwrap();
+                process::exit(0);
+            },
+            "-dt" | "--datetime" => {
+                datetime = offset::Local.datetime_from_str(
+                    &args.next().unwrap_or_else(|| {
+                        stderr.write(b"No datetime given.\n").unwrap();
+                        stderr.flush().unwrap();
+                        process::exit(1);
+                    }),
+                    &"%Y-%m-%d %H:%M:%S"
+                ).unwrap_or_else(|_| {
+                    stderr.write(b"Invalid datetime given.\n").unwrap();
+                    stderr.flush().unwrap();
+                    process::exit(1);
+                });
+            },
+            _ => {
+                stderr.write(b"Unknown argument.\n").unwrap();
+                stderr.flush().unwrap();
+                process::exit(1);
+            }
+        }
+    }
 }
 

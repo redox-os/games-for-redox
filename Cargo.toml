@@ -9,6 +9,7 @@ liner = "0.1"
 rand = "0.3"
 rayon = "0.8"
 termion = "1.5.1"
+chrono = "0.4"
 
 [dependencies.extra]
 git = "https://gitlab.redox-os.org/redox-os/libextra.git"
