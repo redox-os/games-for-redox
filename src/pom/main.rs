@@ -23,8 +23,7 @@ use std::f64::consts::PI;
 //  Comments give the section from the book that particular piece of code was
 //  adapted from.
 
-const HELP: &'static str = r#"
-pom ~ Phase of the Moon
+const HELP: &'static str = r#"pom ~ Phase of the Moon
 
 flags:
     -h  | --help       ~ this help message.
@@ -187,9 +186,9 @@ fn main() {
                 stdout.write(b" Waning ").unwrap();
             }
             if today > 50.0 {
-                println!("Gibbous {:.2}% of Full", today)
+                println!("Gibbous ({:.2}% of Full)", today)
             } else {
-                println!("Crescent {:.2}% of Full", today)
+                println!("Crescent ({:.2}% of Full)", today)
             }
         }
     }
