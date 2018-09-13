@@ -45,7 +45,6 @@ const FRAC_360_TROP_YEAR: f64 = 0.9856473563866f64; // 360 divided by 365.242191
 
 const L_0: f64 = 91.929335f64; // Moon's mean longitude at the epoch
 const P_0: f64 = 130.143076f64; // Moon's mean longitude of the perigee at epoch
-const N_0: f64 = 291.682547f64; // Moon's mean longitude of the node at epoch
 
 /// Calculate the phase of the moon given a certain number of days away from the
 /// epoch January 2010.
@@ -68,8 +67,6 @@ fn potm(days: f64) -> f64 {
     let l = adj360(13.1763966f64 * days + L_0);
     //     (c) the Moon's mean anomaly, M_m
     let M_m = adj360(l - 0.1114041f64 * days - P_0);
-    //     (d) the ascending node's mean longitude, N
-    let N_m = adj360(N_0 - 0.0529539f64 * days);
     // Next we calculate the corrections for:
     //     (a) Evection
     let E_v = 1.2739 * (2.0 * (l - Lambda_sol) - M_m).to_radians().sin();
@@ -163,8 +160,6 @@ fn main() {
 
     let seconds = datetime.signed_duration_since(epoch).num_seconds();
     let days = seconds as f64 / 86400.0;
-    // Why add 0.05 ?
-    // let today = potm(days) + 0.5;
     let today = potm(days);
 
     if percentage_only {
