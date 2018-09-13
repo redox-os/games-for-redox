@@ -168,33 +168,33 @@ fn main() {
     let today = potm(days);
 
     if percentage_only {
-        println!("{}", today);
+        println!("{:.2}", today);
         process::exit(0);
     }
 
-    stdout.write(b"The moon is").unwrap();
+    stdout.write(b"The Moon is").unwrap();
     if today.round() == 100.0 {
-        stdout.write(b"full\n").unwrap();
+        stdout.write(b"Full\n").unwrap();
     } else if today.round() == 0.0 {
-        stdout.write(b"new\n").unwrap();
+        stdout.write(b"New\n").unwrap();
     } else {
         let tomorrow = potm(days + 1.0);
         if today.round() == 50.0 {
             if tomorrow > today {
-                stdout.write(b"at the first quarter\n").unwrap();
+                stdout.write(b"at the First Quarter\n").unwrap();
             } else {
-                stdout.write(b"at the last quarter\n").unwrap();
+                stdout.write(b"at the Last Quarter\n").unwrap();
             }
         } else {
             if tomorrow > today {
-                stdout.write(b" waxing ").unwrap();
+                stdout.write(b" Waxing ").unwrap();
             } else {
-                stdout.write(b" waning ").unwrap();
+                stdout.write(b" Waning ").unwrap();
             }
             if today > 50.0 {
-                println!("gibbous {}% of full", today)
+                println!("Gibbous {:.2}% of Full", today)
             } else {
-                println!("crescent {}% of full", today)
+                println!("Crescent {:.2}% of Full", today)
             }
         }
     }
