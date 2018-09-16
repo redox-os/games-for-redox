@@ -193,3 +193,38 @@ fn main() {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_potm_on_epoch() {
+        assert_eq!(potm(0.0).round(), 99.0);
+    }
+
+    #[test]
+    fn test_potm_on_leap_day_2016_noon() {
+        assert_eq!(potm(2251.5).round(), 64.0);
+    }
+
+    #[test]
+    fn test_potm_on_13_october_2004_0530am() {
+        assert_eq!(potm(-1904.770833333).round(), 1.0);
+    }
+
+    #[test]
+    fn test_adj360_above_360() {
+        assert!((adj360(821.0) - 101.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_adj360_below_0() {
+        assert!((adj360(-643.4) - 76.6).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_adj360_between_0_and_360() {
+        assert!((adj360(168.0) - 168.0).abs() < 1e-10);
+    }
+}
