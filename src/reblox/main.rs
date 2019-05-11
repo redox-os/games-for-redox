@@ -15,7 +15,7 @@ fn main() {
     let mut game = Game::new(async_stdin(), stdout.lock());
 
     if let Err(err) = game.run() {
-        write!(io::stderr(), "Failed to run reblox: {}", err);
+        write!(io::stderr(), "Failed to run reblox: {}", err).unwrap();
     }
 }
 
@@ -80,6 +80,7 @@ impl<R: Read, W: Write> Game<R, W> {
                     },
                     b'k' => self.grid.rotate_clockwise(),
                     b'j' => self.grid.rotate_counter_clockwise(),
+                    b'h' => self.grid.activate_hold(),
                     b' ' => self.grid.fall(),
                     _ => (),
                 }
@@ -90,6 +91,7 @@ impl<R: Read, W: Write> Game<R, W> {
             self.grid.update(time::Duration::from_millis(50));
             self.draw_status()?;
             self.draw_next()?;
+            self.draw_held()?;
             self.draw_grid()?;
             self.stdout.flush()?;
         }
@@ -99,11 +101,11 @@ impl<R: Read, W: Write> Game<R, W> {
     }
 
     fn draw_usage(&mut self) -> Result<()> {
-        write!(self.stdout, "{}q - quit", cursor::Goto(24, 2));
-        write!(self.stdout, "{}asd - move", cursor::Goto(24, 4))?;
-        write!(self.stdout, "{}jk - rotate", cursor::Goto(24, 5))?;
-        write!(self.stdout, "{}space - drop", cursor::Goto(24, 6))?;
-        write!(self.stdout, "{}r - reset", cursor::Goto(24, 8))?;
+        write!(self.stdout, "{}q - quit", cursor::Goto(24, 1))?;
+        write!(self.stdout, "{}asd - move", cursor::Goto(24, 2))?;
+        write!(self.stdout, "{}jk - rotate", cursor::Goto(24, 3))?;
+        write!(self.stdout, "{}space - drop", cursor::Goto(24, 4))?;
+        write!(self.stdout, "{}r - reset", cursor::Goto(24, 5))?;
 
         Ok(())
     }
@@ -128,10 +130,15 @@ impl<R: Read, W: Write> Game<R, W> {
     }
 
     fn draw_status(&mut self) -> Result<()> {
-        write!(self.stdout, "{}level:", cursor::Goto(24, 10))?;
-        write!(self.stdout, "{}{}", cursor::Goto(24, 11), self.grid.get_level().to_string())?;
-        write!(self.stdout, "{}lines cleared:", cursor::Goto(24, 13))?;
-        write!(self.stdout, "{}{}", cursor::Goto(24, 14), self.grid.get_lines_cleared().to_string())?;
+        write!(self.stdout, "{}level:", cursor::Goto(24, 12))?;
+        write!(self.stdout, "{}{}", cursor::Goto(24, 13), self.grid.get_level().to_string())?;
+        write!(self.stdout, "{}lines cleared:", cursor::Goto(24, 14))?;
+        let lines_cleared = self.grid.get_lines_cleared();
+        write!(self.stdout, "{}{}", cursor::Goto(24, 15), lines_cleared.to_string())?;
+        if lines_cleared == 0 {
+            // Clears left-over-text from scores > 10 after resetting
+            write!(self.stdout, "          ")?;
+        }
 
         Ok(())
     }
@@ -152,7 +159,7 @@ impl<R: Read, W: Write> Game<R, W> {
 
     fn draw_grid(&mut self) -> Result<()> {
         for i in 0..(grid::GRID_WIDTH * grid::GRID_HEIGHT) {
-            let grid_2d = grid::Grid1D{x: i}.to_2D(grid::GRID_WIDTH);
+            let grid_2d: grid::Grid2D = grid::Grid1D{x: i, width: grid::GRID_WIDTH}.into();
             let (x, y) = (grid_2d.x, grid_2d.y);
 
             let block_type = self.grid.grid[i as usize];
@@ -160,6 +167,28 @@ impl<R: Read, W: Write> Game<R, W> {
             write!(self.stdout, "{}{}{}", cursor::Goto((x * 2 + 2) as u16, (20 - y) as u16), color::Bg(block_type.to_color()), block_type.to_str())?;
         }
         write!(self.stdout, "{}", style::Reset)?;
+
+        Ok(())
+    }
+
+    fn draw_held(&mut self) -> Result<()> {
+        write!(self.stdout, "{}held (h to hold):", cursor::Goto(24, 6))?;
+        for x in 0..4 {
+            for y in 0..4 {
+                write!(self.stdout, "{}  ", cursor::Goto(24 + x * 2, 7 + y))?;
+            }
+        }
+
+        let held_type = self.grid.get_held_type();
+        if held_type != grid::BlockType::None {
+            write!(self.stdout, "{}", color::Bg(held_type.to_color()))?;
+            let piece_pos = grid::BlockPos::new(10, self.grid.get_held_rot(), held_type, 4).positions;
+            for i in 0..4 {
+                let (x, y) = (piece_pos[i] % 4, piece_pos[i] / 4);
+                write!(self.stdout, "{}  ", cursor::Goto(24 + x as u16 * 2, 7 + (3 - y as u16)))?;
+            }
+            write!(self.stdout, "{}", style::Reset)?;
+        }
 
         Ok(())
     }
