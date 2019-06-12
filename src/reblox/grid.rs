@@ -1,7 +1,14 @@
-
 use std::time::Duration;
-
 use extra::rand::Randomizer;
+
+pub const GRID_WIDTH: u8 = 10;
+pub const GRID_HEIGHT: u8 = 20;
+const START_BLOCK_SPEED_NANOSEC: u32 = 2000000000;
+const END_BLOCK_SPEED_NANOSEC: u32 = 50000000;
+const BLOCK_SPEED_STEP: u32 =
+    (START_BLOCK_SPEED_NANOSEC - END_BLOCK_SPEED_NANOSEC) / 255;
+const LINES_TO_CLEAR_TO_LVL_UP: u8 = 10;
+const BLOCK_COLLECTION_SIZE: u8 = 3;
 
 #[derive(PartialEq,Eq,Clone,Copy)]
 pub enum BlockType {
@@ -32,36 +39,70 @@ impl BlockType {
     }
 }
 
-pub const GRID_WIDTH: u8 = 10;
-pub const GRID_HEIGHT: u8 = 20;
-const START_BLOCK_SPEED_NANOSEC: u32 = 2000000000;
-const END_BLOCK_SPEED_NANOSEC: u32 = 50000000;
-const BLOCK_SPEED_STEP: u32 =
-    (START_BLOCK_SPEED_NANOSEC - END_BLOCK_SPEED_NANOSEC) / 255;
-const LINES_TO_CLEAR_TO_LVL_UP: u8 = 10;
+struct NextBlockCollection {
+    collection: Vec<(BlockType, u8)>,
+}
+
+impl NextBlockCollection {
+    fn new() -> Self {
+        let mut collection = Self {
+            collection: Vec::new(),
+        };
+        collection.generate_collection();
+        collection
+    }
+
+    fn reset(&mut self) {
+        self.collection.clear();
+        self.generate_collection();
+    }
+
+    fn generate_collection(&mut self) {
+        for i in 0..=6 {
+            self.collection.push((BlockType::num_to_block(i), BLOCK_COLLECTION_SIZE));
+        }
+    }
+
+    fn next(&mut self, rng: &mut Randomizer) -> BlockType {
+        let index = rng.read_u8() as usize % self.collection.len();
+        let (next_type, ref mut count) = self.collection[index];
+        *count -= 1;
+        if *count == 0 {
+            self.collection.swap_remove(index);
+        }
+        if self.collection.is_empty() {
+            self.generate_collection();
+        }
+        next_type
+    }
+}
 
 pub struct Grid1D {
     pub x: u8,
+    pub width: u8,
 }
 
 pub struct Grid2D {
     pub x: u8,
     pub y: u8,
+    pub width: u8,
 }
 
-impl Grid1D {
-    pub fn to_2D(&self, width: u8) -> Grid2D {
-        Grid2D {
-            x: self.x % width,
-            y: self.x / width,
+impl From<Grid2D> for Grid1D {
+    fn from(g2d: Grid2D) -> Grid1D {
+        Grid1D {
+            x: g2d.x + g2d.y * g2d.width,
+            width: g2d.width,
         }
     }
 }
 
-impl Grid2D {
-    pub fn to_1D(&self, width: u8) -> Grid1D {
-        Grid1D {
-            x: self.x + self.y * width,
+impl From<Grid1D> for Grid2D {
+    fn from(g1d: Grid1D) -> Grid2D {
+        Grid2D {
+            x: g1d.x % g1d.width,
+            y: g1d.x / g1d.width,
+            width: g1d.width,
         }
     }
 }
@@ -189,11 +230,17 @@ pub struct Grid {
     /// If the next falling block's spawn area is obstructed by another block
     /// when spawning the falling block, the game ends.
     pub dead: bool,
+
+    next_block_collection: NextBlockCollection,
+
+    held_block_type: BlockType,
+    held_block_rot: u8,
+    held_changed: bool,
 }
 
 impl Grid {
     pub fn new() -> Grid {
-        Grid {
+        let mut grid = Grid {
             grid: [BlockType::None; (GRID_WIDTH * (GRID_HEIGHT + 1)) as usize],
             falling_type: BlockType::None,
             falling_pos: 0,
@@ -206,21 +253,30 @@ impl Grid {
             elapsed_time: Duration::new(0, 0),
             cached_fall_rate: Duration::new(0, START_BLOCK_SPEED_NANOSEC),
             dead: false,
-        }
+            next_block_collection: NextBlockCollection::new(),
+            held_block_type: BlockType::None,
+            held_block_rot: 0,
+            held_changed: false,
+        };
+        grid.next_falling_type = grid.next_block_collection.next(&mut grid.rng);
+        grid
     }
 
     pub fn reset(&mut self) {
         for i in 0..(GRID_WIDTH * (GRID_HEIGHT + 1)) {
             self.grid[i as usize] = BlockType::None;
         }
+        self.next_block_collection.reset();
         self.falling_type = BlockType::None;
-        self.next_falling_type = BlockType::num_to_block(self.rng.read_u8() % 7);
+        self.next_falling_type = self.next_block_collection.next(&mut self.rng);
         self.next_falling_rot = self.rng.read_u8() % 4;
         self.level = 0;
         self.lines_cleared = 0;
         self.elapsed_time = Duration::new(0, 0);
         self.cached_fall_rate = Duration::new(0, START_BLOCK_SPEED_NANOSEC);
         self.dead = false;
+        self.held_block_type = BlockType::None;
+        self.held_changed = false;
     }
 
     pub fn update(&mut self, delta: Duration) {
@@ -251,10 +307,10 @@ impl Grid {
 
     fn generate_falling(&mut self) {
         self.check_lines();
-        self.falling_pos = Grid2D { x: GRID_WIDTH / 2, y: GRID_HEIGHT - 1 }.to_1D(GRID_WIDTH).x;
+        self.falling_pos = Grid1D::from(Grid2D { x: GRID_WIDTH / 2, y: GRID_HEIGHT - 1, width: GRID_WIDTH }).x;
         self.falling_type = self.next_falling_type;
         self.falling_rot = self.next_falling_rot;
-        self.next_falling_type = BlockType::num_to_block(self.rng.read_u8() % 7);
+        self.next_falling_type = self.next_block_collection.next(&mut self.rng);
         self.next_falling_rot = self.rng.read_u8() % 4;
         let piece_pos = BlockPos::new(self.falling_pos, self.falling_rot, self.falling_type, GRID_WIDTH).positions;
         for i in 0..4 {
@@ -295,6 +351,7 @@ impl Grid {
             }
             self.falling_type = BlockType::None;
             self.elapsed_time = Duration::new(0, 0);
+            self.held_changed = false;
             self.generate_falling();
         }
     }
@@ -303,6 +360,7 @@ impl Grid {
         if self.falling_type == BlockType::None || self.dead {
             return;
         }
+        self.held_changed = false;
         let piece_pos = BlockPos::new(self.falling_pos, self.falling_rot, self.falling_type, GRID_WIDTH).positions;
         for i in 0..4 {
             self.grid[piece_pos[i] as usize] = BlockType::None;
@@ -603,7 +661,7 @@ impl Grid {
         for y in 0..GRID_HEIGHT {
             let mut is_clearing = true;
             for x in 0..GRID_WIDTH {
-                if self.grid[Grid2D{x: x, y: y}.to_1D(GRID_WIDTH).x as usize] == BlockType::None {
+                if self.grid[Grid1D::from(Grid2D{x: x, y: y, width: GRID_WIDTH}).x as usize] == BlockType::None {
                     is_clearing = false;
                     break;
                 }
@@ -616,11 +674,11 @@ impl Grid {
             if to_clear[y as usize] {
                 for j in y..GRID_HEIGHT {
                     for i in 0..GRID_WIDTH {
-                        self.grid[Grid2D{x: i, y: j}.to_1D(GRID_WIDTH).x as usize] = self.grid[Grid2D{x: i, y: j + 1}.to_1D(GRID_WIDTH).x as usize];
+                        self.grid[Grid1D::from(Grid2D{x: i, y: j, width: GRID_WIDTH}).x as usize] = self.grid[Grid1D::from(Grid2D{x: i, y: j + 1, width: GRID_WIDTH}).x as usize];
                     }
                 }
                 for i in 0..GRID_WIDTH {
-                    self.grid[Grid2D{x: i, y: GRID_HEIGHT}.to_1D(GRID_WIDTH).x as usize] = BlockType::None;
+                    self.grid[Grid1D::from(Grid2D{x: i, y: GRID_HEIGHT, width: GRID_WIDTH}).x as usize] = BlockType::None;
                 }
             }
             if y == 0 {
@@ -663,5 +721,54 @@ impl Grid {
 
     pub fn get_next_rot(&self) -> u8 {
         self.next_falling_rot
+    }
+
+    pub fn activate_hold(&mut self) {
+        if self.held_changed {
+            return;
+        }
+        self.held_changed = true;
+
+        let piece_pos = BlockPos::new(self.falling_pos, self.falling_rot, self.falling_type, GRID_WIDTH).positions;
+        for i in 0..4 {
+            self.grid[piece_pos[i] as usize] = BlockType::None;
+        }
+
+        let held_type = self.held_block_type;
+        let held_rot = self.held_block_rot;
+        self.held_block_type = self.falling_type;
+        self.held_block_rot = self.falling_rot;
+
+        if held_type != BlockType::None {
+            self.falling_type = held_type;
+            self.falling_rot = held_rot;
+            self.falling_pos = Grid1D::from(Grid2D {
+                x: GRID_WIDTH / 2,
+                y: GRID_HEIGHT - 1,
+                width: GRID_WIDTH,
+            }).x;
+            let piece_pos = BlockPos::new(self.falling_pos, self.falling_rot, self.falling_type, GRID_WIDTH).positions;
+            for i in 0..4 {
+                if self.grid[piece_pos[i] as usize] != BlockType::None {
+                    self.dead = true;
+                    return;
+                }
+                else {
+                    self.grid[piece_pos[i] as usize] = self.falling_type;
+                }
+            }
+        } else {
+            self.falling_type = BlockType::None;
+            self.generate_falling();
+        }
+        self.elapsed_time = Duration::new(0, 0);
+    }
+
+    pub fn get_held_type(&self) -> BlockType {
+        self.held_block_type
+    }
+
+    pub fn get_held_rot(&self) -> u8 {
+        self.held_block_rot
     }
 }
