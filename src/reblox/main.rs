@@ -1,3 +1,5 @@
+#![feature(nll)]
+
 extern crate termion;
 extern crate extra;
 
