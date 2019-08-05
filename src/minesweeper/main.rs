@@ -15,6 +15,77 @@ use std::process;
 
 use extra::rand::Randomizer;
 
+static MAN_PAGE: &'static str = /* @MANSTART{cur} */ r#"
+NAME
+    minesweeper - a simple minesweeper implementation.
+
+SYNOPSIS
+    minesweeper [-h | --help]
+                [(-r | --height) <hight#>]
+                [(-c | --width) <width#>]
+                [-b | -i | -a | -g]
+
+DESCRIPTION
+    A command line minesweeper game.
+
+    Rules:
+        Select a cell to reveal, printing the number of adjacent cells holding a mine.
+        If no adjacent cells hold a mine, the cell is called free.
+        Free cells will recursively reveal their neighboring cells.
+        If a mine is revealed, you loose.
+        The grid wraps.
+
+    Controls:
+        ---selection--------------------
+        space - reveal the current cell.
+        ---movement---------------------
+        w | k - move up.
+        a | h - move left.
+        s | j - move down.
+        d | l - move right.
+        ---flags------------------------
+        f     - set flag.
+        F     - remove flag.
+        ---control----------------------
+        q     - quit game.
+        r     - restart game.
+
+OPTIONS
+    -h | --help       - This help page.
+    -r | --height N   - Set the height of the grid.
+    -c | --width N    - Set the width of the grid.
+    -b                - Beginner mode.
+    -i                - Intermediate mode.
+    -a                - Advanced mode.
+    -g                - God mode.
+
+AUTHOR
+    This program was written by Ticki for Redox OS. Bugs, issues, or feature requests
+    should be reported in the Gitlab repository, 'redox-os/games'.
+
+COPYRIGHT
+    Copyright (c) 2016 Ticki
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+    and associated documentation files (the "Software"), to deal in the Software without
+    restriction, including without limitation the rights to use, copy, modify, merge, publish,
+    distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+    Software is furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all copies or
+    substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+    BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+"#; /* @MANEND */
+
+static ARGS_ERR: &'static str = r#"
+unknown argument, try `minesweeper --help`
+"#;
+
 /// A cell in the grid.
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 struct Cell {
@@ -59,43 +130,6 @@ const TOP_RIGHT_CORNER: &'static str = "┐";
 const BOTTOM_LEFT_CORNER: &'static str = "└";
 /// The bottom-right corner
 const BOTTOM_RIGHT_CORNER: &'static str = "┘";
-
-/// The help page.
-const HELP: &'static str = r#"
-minesweeper ~ a simple minesweeper implementation.
-
-rules:
-    Select a cell to reveal, printing the number of adjacent cells holding a mine.
-    If no adjacent cells hold a mine, the cell is called free. Free cell will recursively
-    reveal their neighboring cells. If a mine is revealed, you loose. The grid wraps.
-
-flags:
-    -r | --height N ~ set the height of the grid.
-    -c | --width N  ~ set the width of the grid.
-    -h | --help     ~ this help page.
-    -b              ~ beginner mode.
-    -i              ~ intermediate mode.
-    -a              ~ advanced mode.
-    -g              ~ god mode.
-
-controls:
-    ---selection--------------------
-    space ~ reveal the current cell.
-    ---movement---------------------
-    h | a ~ move left.
-    j | s ~ move down.
-    k | w ~ move up.
-    l | d ~ move right.
-    ---flags------------------------
-    f     ~ set flag.
-    F     ~ remove flag.
-    ---control----------------------
-    q     ~ quit game.
-    r     ~ restart game.
-
-author:
-    ticki.
-"#;
 
 /// The game state.
 struct Game<R, W: Write> {
@@ -562,7 +596,7 @@ fn main() {
             },
             "-h" | "--help" => {
                 // Print the help page.
-                stdout.write(HELP.as_bytes()).unwrap();
+                stdout.write(MAN_PAGE.as_bytes()).unwrap();
                 stdout.flush().unwrap();
                 process::exit(0);
             },
@@ -572,6 +606,7 @@ fn main() {
             "-b" => diff = 10,
             _ => {
                 stderr.write(b"Unknown argument.\n").unwrap();
+                stderr.write(ARGS_ERR.as_bytes()).unwrap();
                 stderr.flush().unwrap();
                 process::exit(1);
             }

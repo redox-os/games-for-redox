@@ -18,8 +18,72 @@ use rusthello_lib::{OtherAction, Result};
 use rusthello_lib::{interface, human_player, ai_player};
 use rusthello_lib::interface::{UserCommand};
 use std::cmp::Ordering;
+use std::env::args;
+use std::io::{self, Write};
+
+static MAN_PAGE: &'static str = /* @MANSTART{cur} */ r#"
+NAME
+    rusthello - a simple Reversi game.
+
+SYNOPSIS
+    rusthello [-h | --help] [-s <seed>]
+
+DESCRIPTION
+    A reversi game.
+
+OPTIONS
+    (none)
+        Run the program.
+    -h
+    --help
+        Print this manual page.
+
+AUTHOR
+    This program was written by Enrico Ghiorzi for Redox OS. Bugs, issues, or feature requests
+    should be reported in the Gitlab repository, 'redox-os/games'.
+
+COPYRIGHT
+    Copyright (c) 2016 Enrico Ghiorzi
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+    and associated documentation files (the "Software"), to deal in the Software without
+    restriction, including without limitation the rights to use, copy, modify, merge, publish,
+    distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+    Software is furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all copies or
+    substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+    BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+"#; /* @MANEND */
+
+static ARGS_ERR: &'static str = r#"
+unknown argument, try `rusthello --help`
+"#;
 
 fn main() {
+    let args = args().skip(1);
+    let stdout = io::stdout();
+    let mut stdout = stdout.lock();
+
+    for i in args {
+        match i.as_str() {
+            "-h" | "--help" => {
+                // Write man page help.
+                stdout.write(MAN_PAGE.as_bytes()).unwrap();
+            }
+            _ => {
+                // Unknown argument(s).
+                stdout.write(ARGS_ERR.as_bytes()).unwrap();
+            }
+        }
+        return;
+    }
+
     // Main intro
     interface::intro();
 

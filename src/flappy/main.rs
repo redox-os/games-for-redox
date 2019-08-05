@@ -8,10 +8,54 @@ use termion::raw::{IntoRawMode, RawTerminal};
 
 use std::collections::VecDeque;
 
+use std::env::args;
 use std::io::{self, Write, Read};
 use std::thread;
 use std::time::Duration;
 
+static MAN_PAGE: &'static str = /* @MANSTART{cur} */ r#"
+NAME
+    flappy - a flappy-bird like game.
+
+SYNOPSIS
+    flappy [-h | --help]
+
+DESCRIPTION
+    A flappy-bird like game in the command-line.
+
+OPTIONS
+    (none)
+        Run the program.
+    -h
+    --help
+        Print this manual page.
+
+AUTHOR
+    This program was written by Jackson O'Donnell for Redox OS. Bugs, issues, or feature requests
+    should be reported in the Gitlab repository, 'redox-os/games'.
+
+COPYRIGHT
+    Copyright (c) 2016 Jackson O'Donnell
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+    and associated documentation files (the "Software"), to deal in the Software without
+    restriction, including without limitation the rights to use, copy, modify, merge, publish,
+    distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+    Software is furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all copies or
+    substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+    BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+"#; /* @MANEND */
+
+static ARGS_ERR: &'static str = r#"
+unknown argument, try `flappy --help`
+"#;
 
 const BIRD_CHAR: u8 = b'@';
 const WALL_CHAR: u8 = b'#';
@@ -234,6 +278,26 @@ impl<R, W: Write> Drop for Game<R, W> {
 }
 
 fn main() {
+    {
+        let args = args().skip(1);
+        let stdout = io::stdout();
+        let mut stdout = stdout.lock();
+
+        for i in args {
+            match i.as_str() {
+                "-h" | "--help" => {
+                    // Write man page help.
+                    stdout.write(MAN_PAGE.as_bytes()).unwrap();
+                }
+                _ => {
+                    // Unknown argument(s).
+                    stdout.write(ARGS_ERR.as_bytes()).unwrap();
+                }
+            }
+            return;
+        }
+    }
+
     let stdout = io::stdout();
 
     let mut game = Game::new(async_stdin(), stdout.lock());
