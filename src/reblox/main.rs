@@ -12,7 +12,7 @@ use std::io::{self, Write, Read, Result};
 use std::thread;
 use std::time;
 
-static MAN_PAGE: &'static str = /* @MANSTART{cur} */ r#"
+static MAN_PAGE: &'static str = /* @MANSTART{reblox} */ r#"
 NAME
     reblox - a tetris clone.
 

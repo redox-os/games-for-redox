@@ -8,7 +8,7 @@ use std::env::args;
 use std::io::{self, BufRead, BufReader, Write};
 use std::mem;
 
-static MAN_PAGE: &'static str = /* @MANSTART{cur} */ r#"
+static MAN_PAGE: &'static str = /* @MANSTART{dem} */ r#"
 NAME
     dem - a command-line Democracy game.
 

@@ -21,7 +21,7 @@ use std::cmp::Ordering;
 use std::env::args;
 use std::io::{self, Write};
 
-static MAN_PAGE: &'static str = /* @MANSTART{cur} */ r#"
+static MAN_PAGE: &'static str = /* @MANSTART{rusthello} */ r#"
 NAME
     rusthello - a simple Reversi game.
 

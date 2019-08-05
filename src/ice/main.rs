@@ -7,7 +7,7 @@ use std::io::{self, Write, Read};
 use std::thread;
 use std::time;
 
-static MAN_PAGE: &'static str = /* @MANSTART{cur} */ r#"
+static MAN_PAGE: &'static str = /* @MANSTART{ice} */ r#"
 NAME
     ice - slide over ice into the goal.
 

@@ -15,7 +15,7 @@ use std::process;
 
 use extra::rand::Randomizer;
 
-static MAN_PAGE: &'static str = /* @MANSTART{cur} */ r#"
+static MAN_PAGE: &'static str = /* @MANSTART{minesweeper} */ r#"
 NAME
     minesweeper - a simple minesweeper implementation.
 

@@ -13,7 +13,7 @@ use std::io::{self, Write, Read};
 use std::thread;
 use std::time::Duration;
 
-static MAN_PAGE: &'static str = /* @MANSTART{cur} */ r#"
+static MAN_PAGE: &'static str = /* @MANSTART{flappy} */ r#"
 NAME
     flappy - a flappy-bird like game.
 

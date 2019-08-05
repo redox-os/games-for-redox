@@ -5,7 +5,7 @@ use std::env::args;
 use std::io::{self, Write};
 use std::{time, thread};
 
-static MAN_PAGE: &'static str = /* @MANSTART{cur} */ r#"
+static MAN_PAGE: &'static str = /* @MANSTART{commie} */ r#"
 NAME
     commie - text hammer and sickle animation loop.
 

@@ -18,7 +18,7 @@ use termion::color::{self, AnsiValue};
 use termion::cursor::Goto;
 use termion::raw::{IntoRawMode, RawTerminal};
 
-static MAN_PAGE: &'static str = /* @MANSTART{cur} */ r#"
+static MAN_PAGE: &'static str = /* @MANSTART{baduk} */ r#"
 NAME
     baduk - text based Baduk game.
 

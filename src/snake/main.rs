@@ -10,7 +10,7 @@ use std::collections::VecDeque;
 use std::thread::sleep;
 use extra::rand::Randomizer;
 
-static MAN_PAGE: &'static str = /* @MANSTART{cur} */ r#"
+static MAN_PAGE: &'static str = /* @MANSTART{snake} */ r#"
 -NAME
 -    snake - a command-line snake game.
 -

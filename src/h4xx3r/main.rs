@@ -5,7 +5,7 @@ use termion::raw::IntoRawMode;
 use std::env::args;
 use std::io::{self, Read, Write};
 
-static MAN_PAGE: &'static str = /* @MANSTART{cur} */ r#"
+static MAN_PAGE: &'static str = /* @MANSTART{h4xx3r} */ r#"
 NAME
     h4xx3r - show you're a h4xx3r.
 

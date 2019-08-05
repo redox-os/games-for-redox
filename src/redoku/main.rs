@@ -8,7 +8,7 @@ use extra::rand::Randomizer;
 use std::collections::HashSet;
 use std::env;
 
-static MAN_PAGE: &'static str = /* @MANSTART{cur} */ r#"
+static MAN_PAGE: &'static str = /* @MANSTART{redoku} */ r#"
 NAME
     redoku - sudoku game or board generator.
 
