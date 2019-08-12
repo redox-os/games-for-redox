@@ -3,11 +3,64 @@ extern crate extra;
 
 use termion::{async_stdin, clear, color, cursor, style};
 use termion::raw::IntoRawMode;
-use std::io::{stdout, stdin, Read, Write};
+use std::env::args;
+use std::io::{self, stdout, Read, Write};
 use std::time::{Instant, Duration};
 use std::collections::VecDeque;
 use std::thread::sleep;
 use extra::rand::Randomizer;
+
+static MAN_PAGE: &'static str = /* @MANSTART{snake} */ r#"
+-NAME
+-    snake - a command-line snake game.
+-
+-SYNOPSIS
+-    snake [-h | --help]
+-
+-DESCRIPTION
+-    A command-line snake game.
+-
+-    Controls:
+-        ` ` - spacebar starts the game.
+-        q   - quit a started game.
+-        w   - move up
+-        a   - move left
+-        s   - move down
+-        d   - move right
+-
+-OPTIONS
+-    (none)
+-        Run the program.
+-    -h
+-    --help
+-        Print this manual page.
+-
+-AUTHOR
+-    This program was written by Marcelo Paez for Redox OS. Bugs, issues, or feature requests
+-    should be reported in the Gitlab repository, 'redox-os/games'.
+-
+-COPYRIGHT
+-    Copyright (c) 2016 Marcelo Paez
+-
+-    Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+-    and associated documentation files (the "Software"), to deal in the Software without
+-    restriction, including without limitation the rights to use, copy, modify, merge, publish,
+-    distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+-    Software is furnished to do so, subject to the following conditions:
+-
+-    The above copyright notice and this permission notice shall be included in all copies or
+-    substantial portions of the Software.
+-
+-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+-    BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+-    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+-"#; /* @MANEND */
+
+static ARGS_ERR: &'static str = r#"
+unknown argument, try `snake --help`
+"#;
 
 mod graphics {
     pub const TOP_LEFT_CORNER: &'static str = "╔";
@@ -162,8 +215,9 @@ impl<R: Read, W: Write> Game<R, W> {
     /// Reset the game.
     ///
     /// This will display the starting play area.
+    #[rustfmt::skip]
     fn reset(&mut self) {
-        write!(self.stdout, "{}{}", clear::All, style::Reset);
+        write!(self.stdout, "{}{}", clear::All, style::Reset).unwrap();
 
         self.draw_walls();
 
@@ -217,6 +271,7 @@ impl<R: Read, W: Write> Game<R, W> {
     }
 
     /// Check if the Snake is overlapping a wall or a body part
+    #[rustfmt::skip]
     fn check_game_over(&mut self) -> bool {
         let head = &self.snake.body.back().unwrap();
 
@@ -445,5 +500,23 @@ fn init(width: usize, height: usize) {
 }
 
 fn main() {
+    let args = args().skip(1);
+    let stdout = io::stdout();
+    let mut stdout = stdout.lock();
+
+    for i in args {
+        match i.as_str() {
+            "-h" | "--help" => {
+                // Write man page help.
+                stdout.write(MAN_PAGE.as_bytes()).unwrap();
+            }
+            _ => {
+                // Unknown argument(s).
+                stdout.write(ARGS_ERR.as_bytes()).unwrap();
+            }
+        }
+        return;
+    }
+
     init(80, 40);
 }

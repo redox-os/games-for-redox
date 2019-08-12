@@ -2,7 +2,52 @@ extern crate termion;
 
 use termion::{clear, color, cursor, style};
 use termion::raw::IntoRawMode;
+use std::env::args;
 use std::io::{self, Read, Write};
+
+static MAN_PAGE: &'static str = /* @MANSTART{h4xx3r} */ r#"
+NAME
+    h4xx3r - show you're a h4xx3r.
+
+SYNOPSIS
+    h4xx3r [-h | --help]
+
+DESCRIPTION
+    Show your pro h4xx3r skills on the command-line.
+
+OPTIONS
+    (none)
+        Run the program.
+    -h
+    --help
+        Print this manual page.
+
+AUTHOR
+    This program was written by Ticki for Redox OS. Bugs, issues, or feature requests
+    should be reported in the Gitlab repository, 'redox-os/games'.
+
+COPYRIGHT
+    Copyright (c) 2016 Ticki
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+    and associated documentation files (the "Software"), to deal in the Software without
+    restriction, including without limitation the rights to use, copy, modify, merge, publish,
+    distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+    Software is furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all copies or
+    substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+    BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+"#; /* @MANEND */
+
+static ARGS_ERR: &'static str = r#"
+unknown argument, try `h4xx3r --help`
+"#;
 
 const SPEED: usize = 7;
 
@@ -532,6 +577,26 @@ pub extern "cdecl" fn kernel(interrupt: usize, mut regs: &mut Regs) {
 "#;
 
 fn main() {
+    {
+        let args = args().skip(1);
+        let stdout = io::stdout();
+        let mut stdout = stdout.lock();
+
+        for i in args {
+            match i.as_str() {
+                "-h" | "--help" => {
+                    // Write man page help.
+                    stdout.write(MAN_PAGE.as_bytes()).unwrap();
+                }
+                _ => {
+                    // Unknown argument(s).
+                    stdout.write(ARGS_ERR.as_bytes()).unwrap();
+                }
+            }
+            return;
+        }
+    }
+
     let stdin = io::stdin();
     let stdout = io::stdout();
     let mut stdout = stdout.lock().into_raw_mode().unwrap();

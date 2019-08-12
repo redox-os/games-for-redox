@@ -200,8 +200,8 @@ pub fn human_make_move(turn: &Turn) -> Result<Action> {
 
                 for curr_char in input.chars() {
                     match curr_char {
-                        '1'...'8' => row = Some(curr_char as usize - '1' as usize),
-                        'a'...'h' => col = Some(curr_char as usize - 'a' as usize),
+                        '1'..='8' => row = Some(curr_char as usize - '1' as usize),
+                        'a'..='h' => col = Some(curr_char as usize - 'a' as usize),
                         _ => {}
                     }
                 }
