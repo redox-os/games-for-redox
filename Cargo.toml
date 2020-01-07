@@ -4,11 +4,14 @@ version = "0.1.0"
 authors = ["Ticki <Ticki@users.noreply.github.com>", "Marcelo Paez <paezao@users.noreply.github.com>", "Enrico <EGhiorzi@users.noreply.github.com>"]
 
 [dependencies]
-libgo = "0.1"
-liner = "0.1"
+libgo = "0.4.0"
+#liner = "0.4.4"
 rand = "0.3"
 rayon = "0.8"
 termion = "1.5.1"
+
+[dependencies.redox_liner]
+git = "https://gitlab.redox-os.org/redox-os/liner.git"
 
 [dependencies.extra]
 git = "https://gitlab.redox-os.org/redox-os/libextra.git"

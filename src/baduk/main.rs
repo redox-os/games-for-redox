@@ -5,13 +5,14 @@ extern crate liner;
 extern crate termion;
 
 use std::cmp;
-use std::io::{self, Write, stdout};
+use std::io::{self, stdout, Write};
 
-use libgo::game::Game;
 use libgo::game::board::Board;
-use libgo::gtp;
+use libgo::game::Game;
+use libgo::gtp::engine::Engine;
 use libgo::gtp::command::Command;
 use liner::Context;
+use liner::Prompt;
 use termion::clear;
 use termion::color::{self, AnsiValue};
 use termion::cursor::Goto;
@@ -23,15 +24,29 @@ fn main() {
 
 fn reset_screen(stdout: &mut RawTerminal<io::StdoutLock>) {
     write!(stdout, "{}{}", clear::All, Goto(1, 1)).expect("reset_screen: failed write");
-    stdout.flush().expect("reset_screen: failed to flush stdout");
+    stdout
+        .flush()
+        .expect("reset_screen: failed to flush stdout");
 }
 
 /// Run the engine in interactive mode.
 pub fn start_interactive_mode() {
-    let command_map = gtp::register_commands();
+    let mut engine = Engine::new();
     let mut game = Game::new();
     let mut result_buffer = "\r\n Enter 'list_commands' for a full list of options.".to_owned();
     let mut prompt = Context::new();
+
+    // get list of commands to register with liner
+    engine.register_all_commands();
+    let commands: Vec<String> = engine
+        .exec(&mut game, &Command::from_line("list_commands").unwrap())
+        .result
+        .unwrap()
+        .unwrap()
+        .split_whitespace()
+        .map(|s| String::from(s))
+        .collect();
+    let mut liner_completer = liner::BasicCompleter::new(commands);
 
     let stdout = stdout();
     let mut stdout = stdout.lock().into_raw_mode().unwrap();
@@ -53,12 +68,14 @@ pub fn start_interactive_mode() {
         let gtp_line = cmp::max(line_number, below_the_board);
         write!(stdout, "{}", Goto(1, gtp_line)).expect("goto failed");
 
-        let line = prompt.read_line("GTP> ", &mut |_event_handler| {}).unwrap();
+        let line = prompt
+            .read_line(Prompt::from("GTP> "), None, &mut liner_completer)
+            .unwrap();
         if let Some(command) = Command::from_line(&line) {
             prompt.history.push(line.into()).unwrap();
 
-            let result = gtp::gtp_exec(&mut game, &command, &command_map);
-            result_buffer = gtp::command_result::display(command.id, result);
+            let result = engine.exec(&mut game, &command);
+            result_buffer = format!("{}", result);
 
             if command.name == "quit" {
                 break;
@@ -83,16 +100,16 @@ pub fn draw_board(board: &Board) {
             'x' => {
                 write!(stdout, "{}", color::Fg(AnsiValue::grayscale(0))).unwrap();
                 stdout.write("●".as_bytes()).unwrap();
-            },
+            }
             'o' => {
                 write!(stdout, "{}", color::Fg(AnsiValue::grayscale(23))).unwrap();
                 stdout.write("●".as_bytes()).unwrap();
-            },
+            }
             '\n' => {
                 write!(stdout, "{}", color::Bg(color::Reset)).unwrap();
                 stdout.write(character.to_string().as_bytes()).unwrap();
                 write!(stdout, "{}", color::Bg(AnsiValue::grayscale(11))).unwrap();
-            },
+            }
             _ => {
                 write!(stdout, "{}", color::Fg(AnsiValue::grayscale(23))).unwrap();
                 stdout.write(character.to_string().as_bytes()).unwrap();
@@ -100,6 +117,12 @@ pub fn draw_board(board: &Board) {
         }
     }
 
-    write!(stdout, "{}{}", color::Fg(color::Reset), color::Bg(color::Reset)).unwrap();
+    write!(
+        stdout,
+        "{}{}",
+        color::Fg(color::Reset),
+        color::Bg(color::Reset)
+    )
+    .unwrap();
     stdout.flush().unwrap();
 }
