@@ -223,7 +223,7 @@ impl<R: Read, W: Write> Game<R, W> {
         self.snake.body.iter().filter(|part| (head.x, head.y) == (part.x, part.y)).count() > 1
         || head.x == 0
         || head.y == 0
-        || head.x == self.width as u16
+        || head.x == self.width as u16 - 1
         || head.y == self.height as u16 - 1
     }
 
